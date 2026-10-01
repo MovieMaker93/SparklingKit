@@ -4,7 +4,8 @@ import { api } from "./api";
 import { AppShell } from "./components/AppShell";
 import { GlobalSearchProvider } from "./components/GlobalSearch";
 import { ToastProvider } from "./components/ToastProvider";
-import { announceSettingsUpdated } from "./settings-events";
+import { announceSettingsUpdated, settingsUpdatedEvent } from "./settings-events";
+import { applyTheme } from "./theme";
 import type { Settings } from "./types";
 import { OnboardingPage } from "./pages/OnboardingPage";
 import { SettingsPage } from "./pages/SettingsPage";
@@ -33,6 +34,12 @@ export function App() {
     let active = true;
     api.settings().then((value) => active && setSettings(value)).catch((value) => active && setSettingsError(value instanceof Error ? value.message : String(value)));
     return () => { active = false; };
+  }, []);
+  useEffect(() => { if (settings) applyTheme(settings.ui.theme); }, [settings?.ui.theme]);
+  useEffect(() => {
+    const handleSettingsUpdated = (event: Event) => setSettings((event as CustomEvent<Settings>).detail);
+    window.addEventListener(settingsUpdatedEvent, handleSettingsUpdated);
+    return () => window.removeEventListener(settingsUpdatedEvent, handleSettingsUpdated);
   }, []);
 
   function completeOnboarding(nextSettings: Settings, openServiceSettings = false) {
