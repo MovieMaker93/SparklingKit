@@ -1981,3 +1981,62 @@ body { background: radial-gradient(circle at 72% -15%, var(--sk-glow), transpare
 .job-thumb { @apply flex h-11 w-11 shrink-0 overflow-hidden rounded-[14px] border border-[var(--sk-n8)] bg-[var(--sk-n5)]; }
 .job-thumb img { @apply block h-full w-full object-cover; }
 .dashboard-recent .job-row .job-thumb, .running-card .job-thumb { @apply h-10 w-10 rounded-[12px]; }
+
+/* Result viewers */
+.transcript-timeline { @apply m-0 mx-auto max-w-4xl list-none px-1 py-3 sm:px-5; }
+.transcript-timeline li { @apply grid grid-cols-[64px_minmax(0,1fr)] items-baseline gap-4 rounded-[12px] px-3 py-2.5 transition-colors; }
+.transcript-timeline li.active { background: var(--sk-accent-soft); }
+.transcript-timeline button { @apply cursor-pointer rounded-[7px] border-0 bg-transparent px-1 py-0.5 text-left; }
+.transcript-timeline time { @apply font-mono text-[12px] font-semibold text-[var(--sk-n12)] transition-colors; }
+.transcript-timeline button:hover time, .transcript-timeline li.active time { color: var(--sk-accent); }
+.transcript-timeline p { @apply m-0 text-[16px] leading-7 text-[var(--sk-n14)]; }
+.transcript-timeline li.active p { @apply text-ink; }
+
+.image-viewer { @apply relative flex min-h-[580px] flex-col overflow-hidden rounded-[14px] bg-[var(--sk-n1)]; }
+.image-viewer-tools { @apply absolute top-3 right-3 z-10 flex gap-1 rounded-[12px] border border-[var(--sk-n8)] p-1; background: color-mix(in srgb, var(--sk-n3) 88%, transparent); backdrop-filter: blur(8px); }
+.image-viewer-tools button { @apply inline-flex h-8 cursor-pointer items-center gap-1.5 rounded-[9px] border-0 bg-transparent px-2.5 text-[12px] font-bold text-[var(--sk-n13)] transition hover:bg-[var(--sk-n6)] hover:text-ink; }
+.image-viewer-tools button.active { @apply bg-[var(--sk-n7)] text-ink; }
+.image-viewer-stage { @apply flex flex-1 items-center justify-center overflow-hidden p-4 pt-14 sm:p-7 sm:pt-14; touch-action: none; }
+.image-viewer.zoomed .image-viewer-stage { @apply cursor-grab active:cursor-grabbing; }
+.image-viewer-stage > img { @apply block max-w-full rounded-[10px] object-contain select-none; max-height: calc(100vh - 260px); box-shadow: 0 12px 40px rgb(0 0 0 / calc(.42 * var(--sk-shadow))); transition: transform .12s ease-out; }
+.image-viewer.zoomed .image-viewer-stage > img { max-width: none; max-height: none; transition: none; }
+.image-compare { @apply relative inline-block max-w-full overflow-hidden rounded-[10px] select-none; box-shadow: 0 12px 40px rgb(0 0 0 / calc(.42 * var(--sk-shadow))); }
+.image-compare img { @apply block max-w-full object-contain; max-height: calc(100vh - 260px); }
+.image-compare .image-compare-before { @apply absolute inset-0 h-full w-full; }
+.image-compare-divider { @apply pointer-events-none absolute top-0 bottom-0 w-0.5 -translate-x-1/2; background: var(--sk-accent); box-shadow: 0 0 0 1px rgb(0 0 0 / .25); }
+.image-compare-label { @apply pointer-events-none absolute top-3 rounded-full px-2.5 py-1 text-[11px] font-bold; background: color-mix(in srgb, var(--sk-n0) 70%, transparent); color: var(--sk-n16); }
+.image-compare-label.before { @apply left-3; }
+.image-compare-label.after { @apply right-3; }
+.image-compare input[type="range"] { @apply absolute inset-0 m-0 h-full w-full cursor-ew-resize opacity-0; }
+
+.document-layout { @apply grid gap-6; }
+.document-layout .prose-output { @apply min-w-0; }
+.document-layout .prose-output > * { max-width: 76ch; }
+.document-outline { @apply hidden; }
+@media (min-width: 1280px) {
+  .document-layout { grid-template-columns: minmax(0, 1fr) 220px; }
+  .document-outline { @apply sticky top-4 block max-h-[calc(100vh-12rem)] self-start overflow-y-auto py-8 pr-2; }
+}
+.document-outline > p { @apply mb-2 px-2 text-[11px] font-bold tracking-[.12em] text-[var(--sk-n12)] uppercase; }
+.document-outline ol { @apply m-0 grid list-none gap-0.5 p-0; }
+.document-outline button { @apply block w-full cursor-pointer truncate rounded-[8px] border-0 bg-transparent px-2 py-1.5 text-left text-[13px] font-medium text-muted transition hover:bg-[var(--sk-n5)] hover:text-ink; }
+.document-outline button.active { @apply text-ink; box-shadow: inset 2px 0 var(--sk-accent); }
+
+.run-timeline { @apply border-t border-line px-4 py-3; }
+.run-timeline summary { @apply flex cursor-pointer list-none items-center justify-between text-[11px] font-bold tracking-[.12em] text-[var(--sk-n12)] uppercase; }
+.run-timeline summary::-webkit-details-marker { display: none; }
+.run-timeline summary small { @apply rounded-full bg-[var(--sk-n6)] px-2 py-0.5 text-[11px] tracking-normal text-[var(--sk-n14)] normal-case; }
+.run-timeline ol { @apply m-0 mt-3 grid list-none gap-3 p-0; }
+.run-timeline li { @apply flex min-w-0 items-start gap-2.5; }
+.run-timeline-dot { @apply mt-0.5 shrink-0 text-[var(--sk-n12)]; }
+.run-status-done .run-timeline-dot, .run-status-done_with_warnings .run-timeline-dot { color: var(--sk-green-6); }
+.run-status-failed .run-timeline-dot { color: var(--sk-red-5); }
+.run-timeline li > span:last-child { @apply min-w-0; }
+.run-timeline strong { @apply block text-[13px] font-bold text-ink; }
+.run-timeline small { @apply mt-0.5 block text-[12px] leading-4 text-muted; }
+
+@media (max-width: 767px) {
+  .image-viewer { @apply min-h-[360px]; }
+  .image-viewer-stage > img, .image-compare img { max-height: calc(100dvh - 240px); }
+  .transcript-timeline li { @apply grid-cols-[52px_minmax(0,1fr)] gap-2.5 px-2; }
+}
