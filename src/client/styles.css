@@ -69,6 +69,10 @@
   --sk-overlay: 255 255 255;
   --sk-shadow: 1;
   --sk-glow: rgba(53, 82, 125, .16);
+  --sk-accent: #67dca5;
+  --sk-accent-hover: #82e6b7;
+  --sk-accent-ink: #062418;
+  --sk-accent-soft: rgba(103, 220, 165, .14);
 }
 :root[data-theme="light"] {
   color-scheme: light;
@@ -124,6 +128,10 @@
   --sk-overlay: 15 23 42;
   --sk-shadow: .32;
   --sk-glow: rgba(103, 220, 165, .10);
+  --sk-accent: #12805a;
+  --sk-accent-hover: #0d6c4b;
+  --sk-accent-ink: #ffffff;
+  --sk-accent-soft: rgba(18, 128, 90, .12);
 }
 
 
@@ -133,7 +141,7 @@ body { margin: 0; min-width: 320px; min-height: 100vh; color: var(--color-ink); 
 button, input, textarea, select { font: inherit; }
 textarea { font-size: 16px; }
 button, a { -webkit-tap-highlight-color: transparent; }
-button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible { outline: 3px solid rgb(var(--sk-overlay) / .28); outline-offset: 2px; }
+button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible { outline: 2px solid var(--sk-accent); outline-offset: 2px; }
 
 /* Application chrome */
 .sidebar { @apply fixed inset-y-0 left-0 z-40 hidden w-[260px] flex-col overflow-y-auto border-r border-[var(--sk-n15)] bg-[var(--sk-n17)] px-4 py-5 transition-[width,padding] duration-200 md:flex; box-shadow: inset -1px 0 rgba(255,255,255,.7); }
@@ -934,6 +942,7 @@ body { background: radial-gradient(circle at 72% -15%, var(--sk-glow), transpare
 .nav-link { color: var(--sk-n13); }
 .nav-link:hover { background: var(--sk-n4); color: var(--sk-n16); }
 .nav-link-active { background: var(--sk-n7); color: var(--sk-n16); box-shadow: inset 0 0 0 1px rgb(var(--sk-overlay) / .07); }
+.nav-link-active svg { color: var(--sk-accent); }
 .sidebar-collapse-button:hover { background: var(--sk-n6); color: var(--sk-n16); }
 .status-card { border-color: var(--sk-n8); background: var(--sk-n3); box-shadow: 0 4px 14px rgb(0 0 0 / calc(.28 * var(--sk-shadow))), inset 0 1px rgb(var(--sk-overlay) / .025); }
 .service-monitor { @apply px-1; }
@@ -950,8 +959,9 @@ body { background: radial-gradient(circle at 72% -15%, var(--sk-glow), transpare
 
 .icon-button { border-color: var(--sk-n8); background: var(--sk-n4); color: var(--sk-n15); box-shadow: 0 2px 5px rgb(0 0 0 / calc(.35 * var(--sk-shadow))), inset 0 1px rgb(var(--sk-overlay) / .035); }
 .icon-button:hover { border-color: var(--sk-n10); background: var(--sk-n6); color: var(--sk-n17); }
-.button-primary, .send-button { border-color: var(--sk-n16); background: linear-gradient(180deg, var(--sk-n17), var(--sk-n15)); color: var(--sk-n2); box-shadow: 0 3px 9px rgb(0 0 0 / calc(.42 * var(--sk-shadow))), inset 0 1px rgba(255, 255, 255, .9); }
-.button-primary:hover, .send-button:hover { background: linear-gradient(180deg, var(--sk-n17), var(--sk-n16)); }
+/* One accent marks the primary action on every surface. */
+.button-primary, .send-button { border-color: var(--sk-accent); background: var(--sk-accent); color: var(--sk-accent-ink); box-shadow: 0 3px 9px rgb(0 0 0 / calc(.42 * var(--sk-shadow))), inset 0 1px rgba(255, 255, 255, .28); }
+.button-primary:hover, .send-button:hover { border-color: var(--sk-accent-hover); background: var(--sk-accent-hover); }
 .button-secondary { border-color: var(--sk-n9); background: var(--sk-n4); color: var(--sk-n15); box-shadow: 0 2px 6px rgb(0 0 0 / calc(.3 * var(--sk-shadow))), inset 0 1px rgb(var(--sk-overlay) / .035); }
 .button-secondary:hover { background: var(--sk-n6); }
 .button-danger { border-color: var(--sk-red-3); background: var(--sk-red-2); color: var(--sk-red-6); box-shadow: 0 3px 9px rgb(0 0 0 / calc(.4 * var(--sk-shadow))), inset 0 1px rgb(var(--sk-overlay) / .04); }
@@ -964,7 +974,7 @@ body { background: radial-gradient(circle at 72% -15%, var(--sk-glow), transpare
 .input::placeholder, .chat-composer textarea::placeholder { color: var(--sk-n12); }
 .input:focus { border-color: var(--sk-n15); }
 .progress-track { background: var(--sk-n7); }
-.progress-fill { background: linear-gradient(90deg, var(--sk-n13), var(--sk-n16)); }
+.progress-fill { background: var(--sk-accent); }
 .status-queued, .status-idle { background: var(--sk-n6); color: var(--sk-n14); }
 .status-preparing, .status-processing, .status-merging { background: var(--sk-n7); color: var(--sk-n15); }
 .status-done { background: var(--sk-green-1); color: var(--sk-green-6); }
