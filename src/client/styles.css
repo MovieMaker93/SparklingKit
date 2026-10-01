@@ -1025,6 +1025,22 @@ body { background: radial-gradient(circle at 72% -15%, var(--sk-glow), transpare
 
 /* Workbench action grid */
 .dashboard-workspace { @apply grid min-w-0 items-stretch; }
+.running-now { @apply border-b border-[var(--sk-n7)] px-6 pt-6 pb-5; }
+.running-now > header { @apply mb-3 flex items-center gap-2.5; }
+.running-now h2 { @apply font-display text-[17px] font-bold tracking-[-.02em]; }
+.running-now > header small { @apply text-[13px] font-semibold text-muted; }
+.running-now-pulse { @apply relative h-2.5 w-2.5 rounded-full; background: var(--sk-accent); box-shadow: 0 0 0 0 var(--sk-accent-soft); animation: running-pulse 1.8s ease-out infinite; }
+@keyframes running-pulse { 0% { box-shadow: 0 0 0 0 var(--sk-accent-soft); } 70% { box-shadow: 0 0 0 9px transparent; } 100% { box-shadow: 0 0 0 0 transparent; } }
+.running-now-grid { @apply grid gap-2.5; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); }
+.running-card { @apply grid min-w-0 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-x-3 gap-y-2.5 rounded-[15px] border border-[var(--sk-n8)] bg-[var(--sk-n3)] p-3.5 transition hover:border-[var(--sk-n10)] hover:bg-[var(--sk-n4)]; }
+.running-card .job-icon { @apply h-10 w-10 rounded-[12px]; }
+.running-card-copy { @apply min-w-0; }
+.running-card-copy strong, .running-card-copy small { @apply block truncate; }
+.running-card-copy strong { @apply text-[14px] font-bold text-ink; }
+.running-card-copy small { @apply mt-0.5 text-[12px] font-medium text-muted; }
+.running-card-percent { @apply font-mono text-[12px] font-semibold text-[var(--sk-n15)]; }
+.running-card .progress-track { @apply col-span-3 h-1.5; }
+@media (prefers-reduced-motion: reduce) { .running-now-pulse { animation: none; } }
 .dashboard-shortcuts { @apply min-w-0; }
 .dashboard-column-heading { @apply flex h-20 items-center justify-between border-b border-[var(--sk-n7)] px-6; }
 .dashboard-column-heading h1, .dashboard-column-heading h2 { @apply font-display text-[24px] font-bold tracking-[-.03em]; }
@@ -1105,26 +1121,23 @@ body { background: radial-gradient(circle at 72% -15%, var(--sk-glow), transpare
 .workbench-workflow-run { @apply inline-flex items-center gap-1.5 text-[13px] font-bold text-[var(--sk-n15)]; }
 
 .dashboard-recent { @apply m-0 min-w-0 border-t border-[var(--sk-n7)]; }
-.dashboard-recent .work-tabs { @apply m-0 grid grid-cols-3 gap-x-3 gap-y-1 overflow-visible rounded-none border-0 bg-transparent px-5 pb-4; }
-.dashboard-recent .work-tabs button { @apply min-w-0 justify-center gap-1 rounded-none border-0 border-b border-transparent px-1 py-2 text-[14px] shadow-none; }
-.dashboard-recent .work-tabs button > svg { @apply shrink-0; }
-.dashboard-recent .work-tabs button.active { @apply border-[var(--sk-n12)] bg-transparent text-ink shadow-none; }
+.dashboard-recent .work-tabs { @apply m-0 flex snap-x gap-1.5 overflow-x-auto rounded-none border-0 bg-transparent px-5 pb-4; scrollbar-width: none; mask-image: linear-gradient(90deg, #000 calc(100% - 28px), transparent); }
+.dashboard-recent .work-tabs::-webkit-scrollbar { display: none; }
+.dashboard-recent .work-tabs button { @apply min-h-8 shrink-0 snap-start justify-center gap-1.5 rounded-full border border-[var(--sk-n8)] px-3 py-1 text-[13px] shadow-none; }
+.dashboard-recent .work-tabs button > svg { @apply h-[15px] w-[15px] shrink-0; }
+.dashboard-recent .work-tabs button.active { @apply border-transparent text-[var(--sk-accent-ink)] shadow-none; background: var(--sk-accent); }
 .dashboard-recent .tab-label-desktop { @apply hidden; }
 .dashboard-recent .tab-label-mobile { @apply inline; }
 .dashboard-recent .jobs-list { @apply rounded-none border-0 border-t border-[var(--sk-n7)] bg-transparent; box-shadow: none; }
 .dashboard-recent .job-row { @apply min-h-18 gap-3 px-4 py-3 pr-11; }
 .dashboard-recent .job-row .job-icon { @apply h-10 w-10 rounded-[12px]; }
 .dashboard-recent .job-row-main > div:first-child { @apply flex-wrap gap-1.5; }
-.dashboard-recent .job-row-main p { @apply basis-36 text-[14px]; }
+.dashboard-recent .job-row-main p { @apply min-w-0 flex-1 text-[14px]; }
 .dashboard-recent .job-row-main p:only-child { @apply flex-1 basis-auto; }
 .dashboard-recent .job-row-main > small { @apply gap-1.5 text-[14px]; }
 .dashboard-recent .job-row-arrow { @apply hidden; }
 .dashboard-recent .job-row-shell > .row-delete-button { @apply right-2; }
 .dashboard-recent .empty-card { @apply min-h-64 rounded-none border-0 bg-transparent; }
-
-@media (min-width: 768px) and (max-width: 1599px) {
-  .dashboard-recent .work-tabs { @apply grid-cols-8; }
-}
 
 @media (min-width: 1600px) {
   .dashboard-page { padding-right: 0; }
@@ -1773,8 +1786,6 @@ body { background: radial-gradient(circle at 72% -15%, var(--sk-glow), transpare
   .section-heading { @apply mb-3 items-center; }
   .section-heading h2 { @apply text-[22px]; }
   .section-heading p { @apply text-[14px]; }
-  .dashboard-page .work-tabs { @apply grid grid-cols-3 overflow-visible p-0; }
-  .dashboard-page .work-tabs button { @apply min-w-0 justify-center gap-1.5 px-2 text-[14px]; }
   .tab-label-desktop { @apply hidden; }
   .tab-label-mobile { @apply inline; }
   .jobs-list { @apply rounded-[16px]; }
