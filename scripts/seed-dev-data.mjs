@@ -109,6 +109,7 @@ const jobs = [
   { id: "dev-07-receipt", type: "image", title: "receipt.jpg", minutesAgo: 1700, input: "receipt.jpg", mime: "image/jpeg",
     outputs: { "document.md": "# receipt.jpg\n\n**Total:** 42.80 EUR\n\n| Item | Price |\n| --- | ---: |\n| Coffee | 3.20 |\n| Notebook | 39.60 |\n" } },
   { id: "dev-08-grounding", type: "image", moduleId: "grounding", workflowId: "grounding.image", title: "harbor.png", minutesAgo: 2900, input: "harbor.png", mime: "image/png",
+    groundingPreview: { source: "harbor.png", box: [120, 610, 300, 210] },
     outputs: { "grounding.annotations.json": JSON.stringify({ version: 1, imageWidth: 1024, imageHeight: 1024, results: [{ query: "boat", boxes: [{ x1: 120, y1: 610, x2: 420, y2: 820 }] }] }, null, 2) } },
   { id: "dev-09-uuid", type: "pdf", title: "74ff7b57-ef9e-48a7-b02d-5f3c0c1a2b3d.pdf", minutesAgo: 4400, input: "report.pdf", mime: "application/pdf",
     outputs: { "document.md": "# 74ff7b57-ef9e-48a7-b02d-5f3c0c1a2b3d.pdf\n\nInvoice 2026-0815 for consulting services.\n" } },
@@ -145,6 +146,12 @@ async function main() {
       await fs.writeFile(path.join(root, "output", name), content);
       outputFiles.push(name);
     }
+    if (job.groundingPreview) {
+      const { source, box: [x, y, width, height] } = job.groundingPreview;
+      const data = (await fs.readFile(path.join(mediaDir, source))).toString("base64");
+      await fs.writeFile(path.join(root, "output", "grounding-preview.svg"), `<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024"><image href="data:image/png;base64,${data}" width="1024" height="1024"/><rect x="${x}" y="${y}" width="${width}" height="${height}" fill="none" stroke="#67dca5" stroke-width="6" rx="6"/><text x="${x + 8}" y="${y - 12}" fill="#67dca5" font-family="sans-serif" font-size="28" font-weight="700">boat</text></svg>`);
+      outputFiles.unshift("grounding-preview.svg");
+    }
     for (const [name, mediaName] of Object.entries(job.copyOutputs || {})) {
       await fs.copyFile(path.join(mediaDir, mediaName), path.join(root, "output", name));
       outputFiles.push(name);
@@ -168,6 +175,10 @@ async function main() {
       warnings: [],
       params: job.prompt ? { prompt: job.title, size: "1024x1024" } : {},
     };
+    if (job.id === "dev-01-pdf-report") {
+      const run = (id, moduleId, workflowId, start, end, outputs) => ({ id, moduleId, workflowId, status: "done", progress: 100, stage: "Complete", createdAt: iso(start), updatedAt: iso(end), startedAt: iso(start), completedAt: iso(end), inputArtifactIds: [], outputArtifactIds: outputs, params: {}, steps: [], warnings: [] });
+      manifest.runs = [run("run-ocr", "ocr", "ocr.pdf", job.minutesAgo + 3, job.minutesAgo + 1.4, []), run("run-map", "mindmap", "mindmap.default", job.minutesAgo + 0.9, job.minutesAgo, [])];
+    }
     await fs.writeFile(path.join(root, "job.json"), `${JSON.stringify(manifest, null, 2)}\n`);
   }
   const chatsDir = path.join(dataDir, "chats", "dev-chat-1");
