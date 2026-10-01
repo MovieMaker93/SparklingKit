@@ -131,10 +131,10 @@ export function galleryItems(jobs: JobManifest[], options: { source?: "all" | "g
         role: artifact.role,
         createdAt: artifact.createdAt || job.createdAt,
         prompt: uploaded ? undefined : text(meta.prompt) ?? text(params.prompt),
-        model: text(meta.model),
+        model: text(meta.model) ?? (uploaded ? undefined : text(params.model)),
         size: text(meta.size) ?? (uploaded ? undefined : text(params.size)),
-        seed: number(meta.seed),
-        steps: number(meta.steps),
+        seed: number(meta.seed) ?? (uploaded ? undefined : number(params.seed)),
+        steps: number(meta.steps) ?? (uploaded ? undefined : number(params.steps)),
       };
       if (options.model && item.model !== options.model) continue;
       items.push(item);

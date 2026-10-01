@@ -1,3 +1,4 @@
+import type { ImageCapabilities } from "./image-capabilities";
 import type { Chat, EndpointConfig, GalleryItem, EndpointHealth, EndpointKind, FlowRun, Health, Job, ModuleDescriptor, ModuleId, PromptPreset, SearchResponse, SearchScope, Settings, SparkStatus, WorkflowDefinition, WorkflowRun, WorkflowValidationResult } from "./types";
 
 async function request<T>(url: string, init?: RequestInit): Promise<T> {
@@ -48,7 +49,8 @@ export const api = {
   },
   previewTranslation: (text: string, sourceLanguage: string, targetLanguage: string, signal?: AbortSignal) => request<{ text: string; truncated: boolean }>("/api/modules/translation/preview", { method: "POST", body: JSON.stringify({ text, sourceLanguage, targetLanguage }), signal }),
   createTextTranslationJob: (text: string, sourceLanguage: string, targetLanguage: string) => request<Job>("/api/modules/translation/text", { method: "POST", body: JSON.stringify({ text, sourceLanguage, targetLanguage }) }),
-  createImageJob: (prompt: string, size: string) => request<Job>("/api/modules/text-to-image/jobs", { method: "POST", body: JSON.stringify({ prompt, size }) }),
+  imageCapabilities: () => request<ImageCapabilities>("/api/modules/text-to-image/capabilities"),
+  createImageJob: (prompt: string, size: string, options: { steps?: number; seed?: number } = {}) => request<Job>("/api/modules/text-to-image/jobs", { method: "POST", body: JSON.stringify({ prompt, size, ...options }) }),
   createMindMapJob: (subject: string, options: { instructions?: string; depth: number; breadth: number }) => request<Job>("/api/modules/mindmap/jobs", { method: "POST", body: JSON.stringify({ subject, ...options }) }),
   jobs: () => request<{ jobs: Job[]; total: number }>("/api/jobs"),
   gallery: (options: { source?: "all" | "generated" | "uploaded"; model?: string; offset?: number; limit?: number } = {}) => {
