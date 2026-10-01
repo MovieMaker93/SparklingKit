@@ -15,6 +15,7 @@ import type { ChatMessage, EndpointKind, JobKind, PromptPreset, Settings } from 
 import { listModules } from "./modules/registry.js";
 import { TRANSLATION_PREVIEW_CHARACTER_LIMIT, translateContent } from "./modules/translation/service.js";
 import { searchWorkspace } from "./search.js";
+import { ensureThumbnail, galleryItems, thumbnailWidth } from "./thumbnails.js";
 import { workflowRouter } from "./workflows/routes.js";
 import { closeQueue, enqueueJob, enqueuePreset, enqueueWorkflowRun, pingRedis, startWorker, stopJobWork, stopRunWork } from "./queue.js";
 import {
@@ -133,6 +134,12 @@ const textTranslationSchema = z.object({
 const translationPreviewSchema = textTranslationSchema.extend({ text: z.string().trim().min(1).max(50_000) });
 const fileTranslationSchema = textTranslationSchema.omit({ text: true });
 const translationFileExtensions = new Set([".txt", ".md", ".markdown", ".html", ".htm"]);
+const gallerySchema = z.object({
+  source: z.enum(["all", "generated", "uploaded"]).default("all"),
+  model: z.string().max(200).optional(),
+  offset: z.coerce.number().int().min(0).default(0),
+  limit: z.coerce.number().int().min(1).max(200).default(60),
+});
 const searchQuerySchema = z.object({
   q: z.string().max(200).default(""),
   scope: z.enum(SEARCH_SCOPES).default("all"),
@@ -451,6 +458,23 @@ app.patch("/api/jobs/:id/files/*file", async (request, response) => {
   const relative = Array.isArray(request.params.file) ? request.params.file.join("/") : request.params.file;
   const { name } = renameSchema.parse(request.body);
   response.json(await renameOutputFile(job.id, relative, name));
+});
+
+app.get("/api/jobs/:id/thumbnails/:artifactId", async (request, response) => {
+  const job = await readJob(request.params.id);
+  const artifact = job.artifacts.find((candidate) => candidate.id === request.params.artifactId);
+  if (!artifact) return response.status(404).json({ error: "Artifact not found" });
+  const file = await ensureThumbnail(job, artifact, thumbnailWidth(request.query.w));
+  response.setHeader("Cache-Control", "private, no-cache");
+  response.type("image/webp").sendFile(file);
+});
+
+app.get("/api/gallery", async (request, response) => {
+  const input = gallerySchema.parse(request.query);
+  const all = galleryItems(await listJobs(), { source: input.source });
+  const models = [...new Set(all.flatMap((item) => (item.model ? [item.model] : [])))].sort();
+  const items = input.model ? all.filter((item) => item.model === input.model) : all;
+  response.json({ items: items.slice(input.offset, input.offset + input.limit), total: items.length, models });
 });
 
 app.get("/api/jobs/:id/input/:file", async (request, response) => {

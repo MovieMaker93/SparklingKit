@@ -1,4 +1,4 @@
-import type { Chat, EndpointConfig, EndpointHealth, EndpointKind, FlowRun, Health, Job, ModuleDescriptor, ModuleId, PromptPreset, SearchResponse, SearchScope, Settings, SparkStatus, WorkflowDefinition, WorkflowRun, WorkflowValidationResult } from "./types";
+import type { Chat, EndpointConfig, GalleryItem, EndpointHealth, EndpointKind, FlowRun, Health, Job, ModuleDescriptor, ModuleId, PromptPreset, SearchResponse, SearchScope, Settings, SparkStatus, WorkflowDefinition, WorkflowRun, WorkflowValidationResult } from "./types";
 
 async function request<T>(url: string, init?: RequestInit): Promise<T> {
   const response = await fetch(url, {
@@ -11,6 +11,10 @@ async function request<T>(url: string, init?: RequestInit): Promise<T> {
   }
   if (response.status === 204) return undefined as T;
   return response.json() as Promise<T>;
+}
+
+export function thumbnailUrl(jobId: string, artifactId: string, width = 320) {
+  return `/api/jobs/${encodeURIComponent(jobId)}/thumbnails/${encodeURIComponent(artifactId)}?w=${width}`;
 }
 
 function encodedPath(value: string) {
@@ -47,6 +51,10 @@ export const api = {
   createImageJob: (prompt: string, size: string) => request<Job>("/api/modules/text-to-image/jobs", { method: "POST", body: JSON.stringify({ prompt, size }) }),
   createMindMapJob: (subject: string, options: { instructions?: string; depth: number; breadth: number }) => request<Job>("/api/modules/mindmap/jobs", { method: "POST", body: JSON.stringify({ subject, ...options }) }),
   jobs: () => request<{ jobs: Job[]; total: number }>("/api/jobs"),
+  gallery: (options: { source?: "all" | "generated" | "uploaded"; model?: string; offset?: number; limit?: number } = {}) => {
+    const params = new URLSearchParams(Object.entries(options).flatMap(([key, value]) => (value === undefined || value === "" ? [] : [[key, String(value)]])));
+    return request<{ items: GalleryItem[]; total: number; models: string[] }>(`/api/gallery?${params}`);
+  },
   job: (id: string) => request<Job>(`/api/jobs/${id}`),
   startRun: (id: string, input: { moduleId: ModuleId; workflowId: string; inputArtifactIds: string[]; params: Record<string, unknown> }) => request<{ job: Job; run: WorkflowRun }>(`/api/jobs/${id}/runs`, { method: "POST", body: JSON.stringify(input) }),
   renameJob: (id: string, title: string) => request<Job>(`/api/jobs/${id}`, { method: "PATCH", body: JSON.stringify({ title }) }),

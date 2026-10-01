@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Link, NavLink, useLocation } from "react-router-dom";
-import { AudioLines, BrainCircuit, ChevronUp, GitBranch, Image as ImageIcon, LayoutGrid, Languages, MessageCircle, Network, PanelLeftClose, PanelLeftOpen, ScanSearch, ScanText, Search, Settings } from "lucide-react";
+import { AudioLines, BrainCircuit, ChevronUp, GitBranch, Images, Image as ImageIcon, LayoutGrid, Languages, MessageCircle, Network, PanelLeftClose, PanelLeftOpen, ScanSearch, ScanText, Search, Settings } from "lucide-react";
 import { api } from "../api";
 import { settingsUpdatedEvent } from "../settings-events";
 import type { Health, ModuleDescriptor, Settings as AppSettings, SparkStatus } from "../types";
@@ -180,6 +180,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         <nav>
           <NavLink to="/" end title="Workbench" aria-label="Workbench" className={({ isActive }) => `nav-link ${isActive ? "nav-link-active" : ""}`}><LayoutGrid size={19} strokeWidth={1.8} /><span>Workbench</span></NavLink>
           <NavLink to="/workflows" title="Workflows" aria-label="Workflows" className={({ isActive }) => `nav-link ${isActive ? "nav-link-active" : ""}`}><GitBranch size={19} strokeWidth={1.8} /><span>Workflows</span></NavLink>
+          <NavLink to="/gallery" title="Gallery" aria-label="Gallery" className={({ isActive }) => `nav-link ${isActive ? "nav-link-active" : ""}`}><Images size={19} strokeWidth={1.8} /><span>Gallery</span></NavLink>
           <p className="nav-label nav-label-tools">Tools</p>
           <div className="module-nav-list">{modules.map((module) => {
             const Icon = moduleIcons[module.icon];

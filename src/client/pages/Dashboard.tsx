@@ -3,7 +3,7 @@ import { useDropzone } from "react-dropzone";
 import { Link, useNavigate } from "react-router-dom";
 import { ArrowLeftRight, ArrowRight, AudioLines, CloudUpload, FileText, FolderOpen, GitBranch, Image as ImageIcon, Languages, MessageCircle, Network, Play, Save, ScanSearch, ScanText, Search, Trash2, X } from "lucide-react";
 import { api, uploadJob, uploadTranslationJob } from "../api";
-import { cn, ConfirmDialog, displayTitle, formatBytes, JobIcon, jobLabel, Progress, StatusBadge, timeAgo } from "../components/ui";
+import { cn, ConfirmDialog, displayTitle, formatBytes, JobIcon, jobLabel, JobThumb, Progress, StatusBadge, timeAgo } from "../components/ui";
 import { savedTranslationPreferences, translationLanguages, translationPreferenceKey, type TranslationPreferences } from "../translation";
 import type { Job, JobKind, ModuleDescriptor, ModuleId, WorkflowDefinition } from "../types";
 import { useGlobalSearch } from "../components/GlobalSearch";
@@ -373,7 +373,7 @@ function RunningNow({ jobs }: { jobs: Job[] }) {
   return <section className="running-now" aria-label="Running now">
     <header><span className="running-now-pulse" aria-hidden="true" /><h2>Running now</h2><small>{active.length} active</small></header>
     <div className="running-now-grid">{active.slice(0, 4).map((job) => <Link to={`/jobs/${job.id}`} className="running-card" key={job.id}>
-      <JobIcon type={job.type} moduleId={job.moduleId} workflow={job.workflowId.startsWith("flow:")} />
+      <JobThumb job={job} />
       <span className="running-card-copy"><strong title={job.title}>{displayTitle(job)}</strong><small>{job.status === "queued" ? "Waiting for a worker" : job.detail ? `${job.stage} · ${job.detail}` : job.stage}</small></span>
       <span className="running-card-percent">{job.status === "queued" ? "Queued" : `${job.progress}%`}</span>
       <Progress job={job} />
@@ -383,6 +383,5 @@ function RunningNow({ jobs }: { jobs: Job[] }) {
 
 function JobRow({ job, onDelete, compact = false }: { job: Job; onDelete: () => void; compact?: boolean }) {
   const running = activeStatuses.has(job.status);
-  const workflowJob = job.workflowId.startsWith("flow:");
-  return <div className={cn("job-row-shell", compact && "compact")}><Link to={`/jobs/${job.id}`} className="job-row group"><JobIcon type={job.type} moduleId={job.moduleId} workflow={workflowJob} /><div className="job-row-main"><div><p title={job.title}>{displayTitle(job)}</p>{!compact && <StatusBadge status={job.status} />}</div><small>{compact && job.status !== "done" && <StatusBadge status={job.status} />}{jobLabel(job)}<i />{!compact && <>{job.stage}<i /></>}{timeAgo(job.createdAt)}</small>{running && <Progress job={job} />}</div><ArrowRight size={19} className="job-row-arrow" /></Link><button className="row-delete-button" onClick={onDelete} aria-label={`Delete ${job.title}`} title="Delete job"><Trash2 size={15} /></button></div>;
+  return <div className={cn("job-row-shell", compact && "compact")}><Link to={`/jobs/${job.id}`} className="job-row group"><JobThumb job={job} /><div className="job-row-main"><div><p title={job.title}>{displayTitle(job)}</p>{!compact && <StatusBadge status={job.status} />}</div><small>{compact && job.status !== "done" && <StatusBadge status={job.status} />}{jobLabel(job)}<i />{!compact && <>{job.stage}<i /></>}{timeAgo(job.createdAt)}</small>{running && <Progress job={job} />}</div><ArrowRight size={19} className="job-row-arrow" /></Link><button className="row-delete-button" onClick={onDelete} aria-label={`Delete ${job.title}`} title="Delete job"><Trash2 size={15} /></button></div>;
 }

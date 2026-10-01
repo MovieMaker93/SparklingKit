@@ -1,14 +1,34 @@
-import { useEffect, useId, useRef, type ReactNode } from "react";
+import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { Check, CheckCircle2, Clock3, FileImage, FileText, GitBranch, LoaderCircle, Mic2, Network, Pencil, Trash2, TriangleAlert, XCircle } from "lucide-react";
-import type { Job, JobKind, JobStatus, ModuleId } from "../types";
+import { thumbnailUrl } from "../api";
+import type { Artifact, Job, JobKind, JobStatus, ModuleId } from "../types";
 
 export function cn(...inputs: ClassValue[]) { return twMerge(clsx(inputs)); }
 
 export function JobIcon({ type, moduleId, workflow = false, className }: { type: JobKind; moduleId?: ModuleId; workflow?: boolean; className?: string }) {
   const Icon = workflow ? GitBranch : moduleId === "mindmap" ? Network : type === "audio" ? Mic2 : type === "image" || type === "text" ? FileImage : FileText;
   return <span className={cn("job-icon", `job-icon-${workflow ? "workflow" : moduleId === "mindmap" ? "mindmap" : type}`, className)}><Icon size={20} strokeWidth={1.8} /></span>;
+}
+
+const previewKinds: Array<Artifact["kind"]> = ["generated-image", "source-image", "source-video", "source-pdf"];
+
+/** The artifact that best represents a job visually: its generated image, else its source media. */
+export function previewArtifact(job: Pick<Job, "artifacts">) {
+  for (const kind of previewKinds) {
+    const artifact = job.artifacts?.find((candidate) => candidate.kind === kind && !/\.svg$/i.test(candidate.path));
+    if (artifact) return artifact;
+  }
+  return undefined;
+}
+
+/** A thumbnail of the job's media, falling back to the module icon when there is none or it fails to render. */
+export function JobThumb({ job, className }: { job: Pick<Job, "id" | "type" | "moduleId" | "workflowId" | "artifacts">; className?: string }) {
+  const artifact = previewArtifact(job);
+  const [failed, setFailed] = useState(false);
+  if (!artifact || failed) return <JobIcon type={job.type} moduleId={job.moduleId} workflow={job.workflowId.startsWith("flow:")} className={className} />;
+  return <span className={cn("job-thumb", className)}><img src={thumbnailUrl(job.id, artifact.id, 160)} alt="" loading="lazy" decoding="async" onError={() => setFailed(true)} /></span>;
 }
 
 export function StatusBadge({ status }: { status: JobStatus }) {
