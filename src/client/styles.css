@@ -1941,3 +1941,43 @@ body { background: radial-gradient(circle at 72% -15%, var(--sk-glow), transpare
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; transition-duration: .01ms !important; }
 }
+
+/* Gallery */
+.gallery-header { @apply mb-6 flex flex-wrap items-end justify-between gap-4; }
+.gallery-header h1 { @apply font-display text-[28px] font-extrabold tracking-[-.03em]; }
+.gallery-header p { @apply mt-1 text-[14px] font-medium text-muted; }
+.gallery-controls { @apply flex flex-wrap items-center gap-2; }
+.gallery-model { @apply h-11 w-auto min-w-44 py-0 text-[14px]; }
+.gallery-hint { @apply mb-4 rounded-[12px] border border-[var(--sk-n8)] px-4 py-3 text-[14px] font-medium text-[var(--sk-n15)]; background: var(--sk-accent-soft); }
+.gallery-grid { columns: 4 240px; column-gap: 14px; }
+.gallery-card { @apply m-0 mb-3.5 overflow-hidden rounded-[16px] border border-[var(--sk-n8)] bg-[var(--sk-n3)] transition; break-inside: avoid; box-shadow: 0 4px 14px rgb(0 0 0 / calc(.25 * var(--sk-shadow))); }
+.gallery-card:hover { @apply border-[var(--sk-n10)]; }
+.gallery-card.picked { border-color: var(--sk-accent); box-shadow: 0 0 0 2px var(--sk-accent); }
+.gallery-card > button { @apply relative block w-full cursor-zoom-in border-0 bg-[var(--sk-n5)] p-0; }
+.gallery-card img { @apply block h-auto w-full; min-height: 120px; }
+.gallery-pick { @apply absolute top-2.5 right-2.5 flex h-7 w-7 items-center justify-center rounded-full border-2 border-[var(--sk-n17)] text-[13px] font-bold; background: color-mix(in srgb, var(--sk-n0) 55%, transparent); color: var(--sk-n17); }
+.gallery-card.picked .gallery-pick { border-color: var(--sk-accent); background: var(--sk-accent); color: var(--sk-accent-ink); }
+.gallery-card figcaption { @apply px-3.5 py-3; }
+.gallery-card figcaption strong { @apply block truncate text-[14px] font-bold text-ink; }
+.gallery-card figcaption small { @apply mt-1 flex items-center gap-1.5 text-[12px] font-medium text-muted; }
+.gallery-model-chip { @apply rounded-full border border-[var(--sk-n8)] px-2 py-px font-mono text-[11px] text-[var(--sk-n15)]; }
+.gallery-lightbox, .gallery-compare { @apply items-center p-4; }
+.gallery-lightbox-card { @apply grid max-h-[92vh] w-full max-w-6xl overflow-hidden rounded-[20px] border border-[var(--sk-n9)] bg-[var(--sk-n3)] md:grid-cols-[minmax(0,1fr)_300px]; box-shadow: 0 28px 90px rgb(0 0 0 / calc(.6 * var(--sk-shadow))); }
+.gallery-lightbox-card > img { @apply block max-h-[60vh] w-full bg-[var(--sk-n1)] object-contain md:max-h-[92vh]; }
+.gallery-lightbox-card > aside { @apply relative flex flex-col gap-5 border-t border-[var(--sk-n8)] p-5 md:border-t-0 md:border-l; }
+.gallery-close { @apply absolute top-3 right-3; }
+.gallery-lightbox-actions { @apply mt-auto flex flex-wrap gap-2; }
+.gallery-details > p { @apply pr-10 text-[15px] leading-6 font-semibold text-ink; }
+.gallery-details dl { @apply m-0 mt-4 grid gap-2 text-[13px]; }
+.gallery-details dl div { @apply flex justify-between gap-4 border-b border-[var(--sk-n7)] pb-2; }
+.gallery-details dt { @apply text-muted; }
+.gallery-details dd { @apply m-0 text-right font-mono text-[12px] font-semibold text-ink; }
+.gallery-compare-card { @apply flex max-h-[92vh] w-full max-w-7xl flex-col overflow-hidden rounded-[20px] border border-[var(--sk-n9)] bg-[var(--sk-n3)]; box-shadow: 0 28px 90px rgb(0 0 0 / calc(.6 * var(--sk-shadow))); }
+.gallery-compare-card > header { @apply flex items-center justify-between border-b border-[var(--sk-n8)] px-5 py-3; }
+.gallery-compare-card > header strong { @apply font-display text-[16px] font-bold; }
+.gallery-compare-grid { @apply grid min-h-0 gap-px overflow-y-auto bg-[var(--sk-n8)] md:grid-cols-2; }
+.gallery-compare-grid section { @apply bg-[var(--sk-n3)] p-4; }
+.gallery-compare-grid img { @apply mb-4 block max-h-[58vh] w-full rounded-[12px] bg-[var(--sk-n1)] object-contain; }
+.job-thumb { @apply flex h-11 w-11 shrink-0 overflow-hidden rounded-[14px] border border-[var(--sk-n8)] bg-[var(--sk-n5)]; }
+.job-thumb img { @apply block h-full w-full object-cover; }
+.dashboard-recent .job-row .job-thumb, .running-card .job-thumb { @apply h-10 w-10 rounded-[12px]; }
