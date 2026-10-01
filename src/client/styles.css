@@ -183,20 +183,42 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 .service-state i { @apply h-1.5 w-1.5 rounded-full bg-[var(--sk-n13)]; }
 .service-state.online { @apply text-emerald-700; }
 .service-state.online i { @apply bg-emerald-500; }
-.spark-monitor { @apply mb-4 rounded-[15px] border border-[var(--sk-n8)] bg-[var(--sk-n3)] p-3; box-shadow: 0 4px 14px rgb(0 0 0 / calc(.24 * var(--sk-shadow))), inset 0 1px rgb(var(--sk-overlay) / .025); }
-.spark-monitor-heading, .spark-monitor-metric, .spark-monitor-foot { @apply flex items-center justify-between gap-3; }
+.sidebar-status { @apply flex flex-col gap-2; }
+.spark-monitor { @apply rounded-[14px] border border-[var(--sk-n8)] bg-[var(--sk-n3)]; box-shadow: 0 4px 14px rgb(0 0 0 / calc(.24 * var(--sk-shadow))), inset 0 1px rgb(var(--sk-overlay) / .025); }
+.spark-monitor-summary { @apply block w-full cursor-pointer rounded-[14px] border-0 bg-transparent p-3 text-left text-ink transition hover:bg-[var(--sk-n4)]; }
+.spark-monitor-heading, .spark-monitor-foot { @apply flex items-center justify-between gap-3; }
 .spark-monitor-heading strong { @apply min-w-0 truncate font-display text-[14px] font-bold; }
 .spark-monitor-heading span { @apply inline-flex items-center gap-1.5 text-[11px] font-bold text-muted; }
 .spark-monitor-heading span i { @apply h-1.5 w-1.5 rounded-full bg-[var(--sk-red-5)]; }
 .spark-monitor-heading span.online i { @apply bg-[var(--sk-green-6)]; }
-.spark-monitor-metric { @apply mt-3 text-[11px] text-muted; }
-.spark-monitor-metric > span { @apply shrink-0; }
-.spark-monitor-metric strong { @apply shrink-0 whitespace-nowrap font-mono text-[10px] font-semibold text-ink; }
-.spark-monitor-cuda { @apply mt-2; }
-.spark-memory-track { @apply mt-2 h-1.5 overflow-hidden rounded-full bg-[var(--sk-n7)]; }
-.spark-memory-track i { @apply block h-full rounded-full bg-[var(--sk-n14)] transition-[width]; }
-.spark-monitor-foot { @apply mt-2 text-[10px] font-semibold text-muted; }
-.spark-monitor > small { @apply mt-2 block text-[11px] text-muted; }
+.spark-memory-track { @apply mt-2.5 block h-1.5 overflow-hidden rounded-full bg-[var(--sk-n7)]; }
+.spark-memory-track i { @apply block h-full rounded-full transition-[width]; background: var(--sk-accent); }
+.spark-monitor-foot { @apply mt-2 font-mono text-[11px] font-semibold text-muted; }
+.spark-monitor-summary > small { @apply mt-2 block text-[11px] text-muted; }
+.spark-monitor-details { @apply m-0 grid gap-1.5 border-t border-[var(--sk-n7)] px-3 py-2.5 text-[11px]; }
+.spark-monitor-details div { @apply flex justify-between gap-3; }
+.spark-monitor-details dt { @apply text-muted; }
+.spark-monitor-details dd { @apply m-0 font-mono font-semibold text-ink; }
+.services-chip-wrap { @apply relative; }
+.services-chip { @apply flex h-11 w-full cursor-pointer items-center gap-2.5 rounded-[13px] border border-[var(--sk-n8)] bg-[var(--sk-n2)] px-3 text-left text-[13px] font-bold text-ink transition hover:border-[var(--sk-n10)] hover:bg-[var(--sk-n4)]; }
+.services-chip-dots { @apply grid shrink-0 grid-cols-3 gap-[3px]; }
+.services-chip-dots i { @apply block h-1.5 w-1.5 rounded-full bg-[var(--sk-n11)]; }
+.services-chip-dots i.online { background: var(--sk-green-6); }
+.services-chip-dots i.offline { background: var(--sk-red-5); }
+.services-chip-dots i.checking { background: var(--sk-amber-6); }
+.services-chip-label { @apply min-w-0 flex-1 truncate; }
+.services-chip-count { @apply shrink-0 text-[12px] font-semibold text-muted; }
+.services-chip.tone-online .services-chip-count { color: var(--sk-green-6); }
+.services-chip.tone-offline .services-chip-count { color: var(--sk-red-5); }
+.services-chip-caret { @apply shrink-0 text-muted transition-transform; }
+.services-chip[aria-expanded="true"] .services-chip-caret { @apply rotate-180; }
+.services-popover { @apply absolute right-0 bottom-[calc(100%+8px)] left-0 z-50 rounded-[16px] border border-[var(--sk-n9)] bg-[var(--sk-n3)] p-2; box-shadow: 0 18px 48px rgb(0 0 0 / calc(.5 * var(--sk-shadow))); }
+.services-popover-heading { @apply flex items-center justify-between px-2 pt-1 pb-2; }
+.services-popover-heading strong { @apply font-display text-[14px] font-bold; }
+.services-popover-heading small { @apply text-[12px] font-semibold text-muted; }
+.services-popover .service-row { @apply py-1.5; }
+.services-popover .service-state { @apply w-auto gap-1.5 text-[12px]; }
+.services-popover-link { @apply mt-1 flex h-9 items-center justify-center rounded-[10px] text-[13px] font-bold text-[var(--sk-accent)] transition hover:bg-[var(--sk-n5)]; }
 .main-content { @apply min-h-screen transition-[margin] duration-200 md:ml-[260px]; }
 .product-footer { @apply mt-3 border-t border-[var(--sk-n7)] px-2 pt-3 text-[11px] leading-4 text-muted; }
 .product-footer-links, .product-footer-version { @apply flex items-center gap-2; }
@@ -218,12 +240,12 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
   .sidebar-collapsed .nav-link { @apply mx-auto w-12 justify-center px-0; }
   .sidebar-collapsed .module-nav-list { @apply mt-3; }
   .sidebar-collapsed .settings-nav-link { @apply mt-3; }
-  .sidebar-collapsed .service-monitor { @apply px-0; }
   .sidebar-collapsed .spark-monitor { @apply hidden; }
   .sidebar-collapsed .product-footer { @apply hidden; }
-  .sidebar-collapsed .service-list { @apply gap-1; }
-  .sidebar-collapsed .service-row { @apply relative justify-center px-0; }
-  .sidebar-collapsed .service-state { @apply absolute right-1.5 bottom-1.5; }
+  .sidebar-collapsed .services-chip { @apply mx-auto w-12 justify-center px-0; }
+  .sidebar-collapsed .services-chip-label, .sidebar-collapsed .services-chip-count, .sidebar-collapsed .services-chip-caret { @apply hidden; }
+  .sidebar-collapsed .services-popover { @apply fixed right-auto bottom-4 left-[92px] w-[272px]; }
+  .sidebar-collapsed .services-popover .service-copy, .sidebar-collapsed .services-popover .status-card-heading { @apply block; }
 }
 
 /* Unified search */
@@ -945,14 +967,10 @@ body { background: radial-gradient(circle at 72% -15%, var(--sk-glow), transpare
 .nav-link-active svg { color: var(--sk-accent); }
 .sidebar-collapse-button:hover { background: var(--sk-n6); color: var(--sk-n16); }
 .status-card { border-color: var(--sk-n8); background: var(--sk-n3); box-shadow: 0 4px 14px rgb(0 0 0 / calc(.28 * var(--sk-shadow))), inset 0 1px rgb(var(--sk-overlay) / .025); }
-.service-monitor { @apply px-1; }
-.service-monitor .status-card-heading { @apply px-2 pb-1; }
-.service-monitor .service-row { background: transparent; }
 .service-icon-stt { background: transparent; color: var(--sk-n14); }
 .service-icon-ocr { background: transparent; color: var(--sk-amber-6); }
 .service-icon-llm { background: transparent; color: var(--sk-purple-6); }
 .service-state.online { color: var(--sk-green-6); }
-.service-state { @apply w-3 justify-center; }
 .service-state.offline i { background: var(--sk-red-5); }
 .service-state.disabled i { background: var(--sk-n11); }
 .service-state.checking i { background: var(--sk-amber-6); }
