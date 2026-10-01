@@ -3,20 +3,13 @@ import { useDropzone } from "react-dropzone";
 import { Link, useNavigate } from "react-router-dom";
 import { ArrowLeftRight, ArrowRight, AudioLines, CloudUpload, FileText, FolderOpen, GitBranch, Image as ImageIcon, Languages, MessageCircle, Network, Play, Save, ScanSearch, ScanText, Search, Trash2, X } from "lucide-react";
 import { api, uploadJob, uploadTranslationJob } from "../api";
-import { cn, ConfirmDialog, formatBytes, JobIcon, Progress, StatusBadge, timeAgo } from "../components/ui";
+import { cn, ConfirmDialog, displayTitle, formatBytes, JobIcon, jobLabel, Progress, StatusBadge, timeAgo } from "../components/ui";
 import { savedTranslationPreferences, translationLanguages, translationPreferenceKey, type TranslationPreferences } from "../translation";
 import type { Job, JobKind, ModuleDescriptor, ModuleId, WorkflowDefinition } from "../types";
 import { useGlobalSearch } from "../components/GlobalSearch";
 import { SearchSelect } from "../components/SearchSelect";
 import { useToast } from "../components/ToastProvider";
 import { RunWorkflowDialog, workflowInputSummary } from "../components/RunWorkflowDialog";
-
-const workflowCopy: Record<JobKind, { label: string; description: string }> = {
-  audio: { label: "Transcription", description: "Audio or video to transcript and subtitles" },
-  image: { label: "Image OCR", description: "Images to structured Markdown" },
-  pdf: { label: "PDF OCR", description: "PDFs to one complete structured document" },
-  text: { label: "Text to image", description: "Prompts to generated images" },
-};
 
 type FileAction = "ocr" | "transcription" | "translation";
 type JobFilter = "all" | "audio" | "ocr" | "translation" | "grounding" | "generated" | "mindmap" | "workflow";
@@ -289,6 +282,7 @@ export function Dashboard() {
   return <div className="page-wrap content-page dashboard-page">
     <div className="dashboard-workspace">
     <section className="dashboard-shortcuts">
+    <RunningNow jobs={jobs} />
     <header className="dashboard-column-heading"><h1>Shortcuts</h1></header>
     <div className="workbench-grid">
       <section className="workbench-card workbench-file-card">
@@ -370,9 +364,25 @@ function CompactLanguageSelect({ label, value, allowAuto = false, onChange }: { 
   return <div className="compact-language-select"><small>{label}</small><SearchSelect value={value} options={options} onChange={onChange} ariaLabel={`${label} language`} searchPlaceholder="Search languages" emptyMessage="No languages found" /></div>;
 }
 
+const activeStatuses = new Set(["queued", "preparing", "processing", "merging"]);
+
+/** Live view of work in progress; the Workbench already refreshes jobs every few seconds. */
+function RunningNow({ jobs }: { jobs: Job[] }) {
+  const active = jobs.filter((job) => activeStatuses.has(job.status));
+  if (!active.length) return null;
+  return <section className="running-now" aria-label="Running now">
+    <header><span className="running-now-pulse" aria-hidden="true" /><h2>Running now</h2><small>{active.length} active</small></header>
+    <div className="running-now-grid">{active.slice(0, 4).map((job) => <Link to={`/jobs/${job.id}`} className="running-card" key={job.id}>
+      <JobIcon type={job.type} moduleId={job.moduleId} workflow={job.workflowId.startsWith("flow:")} />
+      <span className="running-card-copy"><strong title={job.title}>{displayTitle(job)}</strong><small>{job.status === "queued" ? "Waiting for a worker" : job.detail ? `${job.stage} · ${job.detail}` : job.stage}</small></span>
+      <span className="running-card-percent">{job.status === "queued" ? "Queued" : `${job.progress}%`}</span>
+      <Progress job={job} />
+    </Link>)}</div>
+  </section>;
+}
+
 function JobRow({ job, onDelete, compact = false }: { job: Job; onDelete: () => void; compact?: boolean }) {
-  const running = ["queued", "preparing", "processing", "merging"].includes(job.status);
+  const running = activeStatuses.has(job.status);
   const workflowJob = job.workflowId.startsWith("flow:");
-  const label = workflowJob ? "Workflow" : job.moduleId === "grounding" ? "Grounding" : job.moduleId === "translation" ? "Translation" : job.moduleId === "mindmap" ? "Mind map" : workflowCopy[job.type].label;
-  return <div className={cn("job-row-shell", compact && "compact")}><Link to={`/jobs/${job.id}`} className="job-row group"><JobIcon type={job.type} moduleId={job.moduleId} workflow={workflowJob} /><div className="job-row-main"><div><p>{job.title}</p>{(!compact || job.status !== "done") && <StatusBadge status={job.status} />}</div><small>{label}<i />{!compact && <>{job.stage}<i /></>}{timeAgo(job.createdAt)}</small>{running && <Progress job={job} />}</div><ArrowRight size={19} className="job-row-arrow" /></Link><button className="row-delete-button" onClick={onDelete} aria-label={`Delete ${job.title}`} title="Delete job"><Trash2 size={15} /></button></div>;
+  return <div className={cn("job-row-shell", compact && "compact")}><Link to={`/jobs/${job.id}`} className="job-row group"><JobIcon type={job.type} moduleId={job.moduleId} workflow={workflowJob} /><div className="job-row-main"><div><p title={job.title}>{displayTitle(job)}</p>{!compact && <StatusBadge status={job.status} />}</div><small>{compact && job.status !== "done" && <StatusBadge status={job.status} />}{jobLabel(job)}<i />{!compact && <>{job.stage}<i /></>}{timeAgo(job.createdAt)}</small>{running && <Progress job={job} />}</div><ArrowRight size={19} className="job-row-arrow" /></Link><button className="row-delete-button" onClick={onDelete} aria-label={`Delete ${job.title}`} title="Delete job"><Trash2 size={15} /></button></div>;
 }
