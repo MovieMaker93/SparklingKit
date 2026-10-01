@@ -2040,3 +2040,11 @@ body { background: radial-gradient(circle at 72% -15%, var(--sk-glow), transpare
   .image-viewer-stage > img, .image-compare img { max-height: calc(100dvh - 240px); }
   .transcript-timeline li { @apply grid-cols-[52px_minmax(0,1fr)] gap-2.5 px-2; }
 }
+
+/* Image generation options */
+.image-quality-choice { @apply mb-3 self-start; }
+.image-advanced { @apply rounded-[14px] border border-[var(--sk-n8)] bg-[var(--sk-n2)] px-4 py-3; }
+.image-advanced summary { @apply flex cursor-pointer items-center justify-between text-[14px] font-bold text-ink; }
+.image-advanced summary small { @apply rounded-full border border-[var(--sk-n8)] px-2 py-0.5 font-mono text-[11px] font-semibold text-muted; }
+.image-advanced-fields { @apply mt-3 grid gap-3 sm:grid-cols-2; }
+.image-advanced > p { @apply mt-2 text-[13px] leading-5 text-muted; }

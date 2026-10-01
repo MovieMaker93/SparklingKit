@@ -7,6 +7,7 @@ import { cn, ConfirmDialog, displayTitle, formatBytes, JobIcon, jobLabel, JobThu
 import { savedTranslationPreferences, translationLanguages, translationPreferenceKey, type TranslationPreferences } from "../translation";
 import type { Job, JobKind, ModuleDescriptor, ModuleId, WorkflowDefinition } from "../types";
 import { useGlobalSearch } from "../components/GlobalSearch";
+import { sizeForQuality, useImageCapabilities } from "../image-capabilities";
 import { SearchSelect } from "../components/SearchSelect";
 import { useToast } from "../components/ToastProvider";
 import { RunWorkflowDialog, workflowInputSummary } from "../components/RunWorkflowDialog";
@@ -101,6 +102,9 @@ export function Dashboard() {
   const [translationError, setTranslationError] = useState("");
   const [imagePrompt, setImagePrompt] = useState("");
   const [imageSize, setImageSize] = useState("1024x1024");
+  const imageCapabilities = useImageCapabilities();
+  const imageQuality = imageCapabilities.sizes.find((size) => size.value === imageSize)?.quality || "standard";
+  const offersHighQuality = imageCapabilities.sizes.some((size) => size.quality === "high");
   const [generating, setGenerating] = useState(false);
   const [imageError, setImageError] = useState("");
   const [chatPrompt, setChatPrompt] = useState("");
@@ -324,8 +328,9 @@ export function Dashboard() {
       <section className="workbench-card workbench-image-card">
         <WorkbenchHeading icon={<ImageIcon size={22} />} title="Create an image" />
         <textarea className="workbench-prompt" value={imagePrompt} onChange={(event) => setImagePrompt(event.target.value)} placeholder="A quiet reading room at night, warm table lamps, rain on tall windows…" maxLength={12000} />
+        {offersHighQuality && <div className="theme-choice image-quality-choice" role="radiogroup" aria-label="Image quality">{(["standard", "high"] as const).map((quality) => <button type="button" role="radio" aria-checked={imageQuality === quality} className={cn(imageQuality === quality && "active")} onClick={() => setImageSize(sizeForQuality(imageCapabilities.sizes, imageSize, quality))} key={quality}>{quality === "standard" ? "Standard" : "High · 2K"}</button>)}</div>}
         <div className="image-size-options" role="radiogroup" aria-label="Image canvas">
-          {[["1024x1024", "Square", "1:1"], ["1536x1024", "Landscape", "3:2"], ["1024x1536", "Portrait", "2:3"]].map(([value, label, ratio]) => <button type="button" role="radio" aria-checked={imageSize === value} className={imageSize === value ? "active" : ""} onClick={() => setImageSize(value)} key={value}><span className={`canvas-shape canvas-${ratio.replace(":", "-")}`} /><span><strong>{label}</strong><small>{value.replace("x", " × ")}</small></span></button>)}
+          {imageCapabilities.sizes.filter((size) => size.quality === imageQuality).map(({ value, label, ratio }) => <button type="button" role="radio" aria-checked={imageSize === value} className={imageSize === value ? "active" : ""} onClick={() => setImageSize(value)} key={value}><span className={`canvas-shape canvas-${ratio.replace(":", "-")}`} /><span><strong>{label}</strong><small>{value.replace("x", " × ")}</small></span></button>)}
         </div>
         {imageError && <p className="form-error">{imageError}</p>}
         <div className="workbench-card-footer"><button className="button-primary" onClick={() => void createImage()} disabled={generating || !imagePrompt.trim() || !configured("text-to-image")}>{generating ? <><span className="spinner dark" />Starting</> : <>Generate<ArrowRight size={17} /></>}</button></div>
