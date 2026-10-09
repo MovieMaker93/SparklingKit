@@ -103,25 +103,58 @@ qwen-image-2.1`. Scripts and raw results are in `~/sk-bench` on the Spark.
 - **State at the end:** SparklingKit runs without its LLM (chat and mind maps are offline), and Flash
   Next is stopped.
 
+## Model evaluation (2026-10-09)
+
+Both ran on the idle Spark, next to the app (scripts in `~/sk-bench`: `llmbench.py`, `longprefill.py`,
+`imagebench.sh`).
+
+- **LLM: Underdog Saluki 27B** (`ConwayResearch/Underdog-Saluki-27B-1.0` @ `1336c0b5`, Apache-2.0).
+  - What it is: a 2-bit GGUF of Qwen3.8-27B (7.9 GB) plus a vision add-on (`mmproj` F16, 0.9 GB).
+  - Setup: run in your `~/llama.cpp` `llama-server` (CUDA 13) with `--jinja -ngl 99 -fa on -c 65536
+    --parallel 1`, on :8331.
+  - Memory: 13.0 GiB on the GPU, about half of Qwen3.6. It loads in 5 s by mapping the file, so there is
+    no loading peak.
+  - Speed:
+    - decode 22–23 tok/s
+    - prefill about 740 tok/s at 1.8k–6k tokens, and 703 tok/s at 25k tokens (36 s)
+  - Function:
+    - **Vision:** read the heading and all 4 table numbers of benchmark page 1.
+    - **Reasoning:** correct, with a short reasoning trace.
+    - **Mind map:** a JSON-mode prompt outside the app came back malformed once, but the app's mind map
+      (1,500 words of input) succeeded on its first call, with 31 nodes, in about 4 min. Thinking is on by
+      default; turning it off for mind maps would cut that time.
+- **Image: Qwen-Image-2.1-Turbo** (`d65dbc9a`, Qwen Research License).
+  - What it is: the same model distilled to 8 steps.
+  - It needs diffusers 0.41.0 (now a release pin) and transformers 5.19.
+  - Memory: float8 at 17.1 GiB on the GPU, with SDPA attention.
+  - Speed: 18 s at 1024² and 65 s at 2048², about 4.4× faster than the base model's 80 s and 286 s.
+  - Quality: on the same 4 prompts with seed 42 it matches the base model. Small text is slightly worse
+    at 1024² ("Capruccino"). At 2048² the requested text is right, and like the base model it adds
+    invented lines to a sparse menu.
+
 ## Left to do
 
 1. **Bring Flash Next back:** `./scripts/spark-switch.sh llm --yes`, then check `:8888`.
-2. **LLM crash.**
+2. **Saluki as the LLM backend** (it would also retire the vLLM crash below).
+   - Add `--llm-backend qwen36|saluki` with a llama.cpp CUDA service. There is no ARM64 CUDA image, so it
+     needs a build for sm_121, as for Parakeet.
+   - Download the pinned files, and turn thinking off for mind maps (`chat_template_kwargs`).
+3. **LLM crash (if Qwen3.6 stays).**
    - Reproduce with one long generation (`min_tokens` about 8000) on the stock config, then without
      `--async-scheduling`.
    - Load the LLM before the other services on every restart, not only at first start. Replace
      `restart: unless-stopped` with a bounded restart, or a script that frees memory first, so a crash
      cannot become an OOM loop.
-3. **Parakeet as the ASR backend.**
+4. **Parakeet as the ASR backend.**
    - Add an adapter service: parakeet.cpp built with `-DPARAKEET_GGML_CUDA=ON
      -DCMAKE_CUDA_ARCHITECTURES=121` (v0.5.0 has no ARM64 CUDA release).
    - Add an ASR profile that requests `verbose_json` with word timestamps, for word-accurate subtitles.
    - It frees about 11 GiB, which also gives an LLM restart room.
-4. **Qwen-Image sizes:** use the official ~4 MP sizes for the "High" set (2528×1696, not 2496×1664), and
-   consider making 2048² the default for Qwen-Image.
-5. **Not run (weights deleted):** Z-Image against Qwen-Image on the same seed, and Unlimited-OCR against
+5. **Image default:** make `qwen-image-2.1-turbo` the default image backend, and consider defaulting it
+   to 2048² for prompts with text. If so, delete the base Qwen-Image 2.1 weights (31 GB).
+6. **Not run (weights deleted):** Z-Image against Qwen-Image on the same seed, and Unlimited-OCR against
    PaddleOCR-VL on the benchmark PDF.
-6. **Load test script:** `load.sh` stops polling on an empty-array check under `set -u`.
+7. **Load test script:** `load.sh` stops polling on an empty-array check under `set -u`.
    Use `declare -A finished=()`.
 
 ## Backlog (from the first review, not started)
