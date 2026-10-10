@@ -45,6 +45,7 @@ model backends, interface work and chat features; see `docs/fork.md`.
 | `scripts/start-dgx-spark.sh` | Builds, downloads (pinned revisions) and starts the whole stack in a memory-safe order |
 | `scripts/spark-switch.sh` | Swaps the Spark between SparklingKit and another always-on LLM container |
 | `scripts/seed-dev-data.mjs` | Sample jobs, media and a chat for UI work |
+| `scripts/bench/` | One-off measurement kits for candidate models (YuE2 music generation); results go to `docs/validation.md` |
 | `distribution/` | Upstream's release installers (they install upstream SparklingKit, not this fork) |
 | `docs/` | Architecture, deployment, DGX operations, workflows, fork notes, validation results |
 
