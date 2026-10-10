@@ -19,6 +19,8 @@ Job / work item
           summarize / translate / ground / generate / map / chat
 ```
 
+The same path is drawn, one sentence at a time, in [`diagrams/architecture`](../diagrams/architecture) ([watch the 30-second mp4](../diagrams/architecture/architecture.mp4)). A file token moves from the browser to the job folder, the queue, the provider and back as an artifact.
+
 Redis coordinates execution. The `/data` directory owns durable state and must be sufficient to inspect, back up, and recover work.
 
 The visual workflow layer composes these same modules and artifacts as a versioned, file-based DAG. It does not introduce another execution or storage model. See [`workflows.md`](workflows.md).

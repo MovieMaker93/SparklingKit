@@ -1,0 +1,25 @@
+{
+  "name": "sparklingkit-architecture-diagram",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "remotion studio",
+    "render": "remotion render src/index.ts Architecture out/architecture.mp4",
+    "still": "remotion still src/index.ts Architecture out/poster.png --frame=860",
+    "typecheck": "tsc --noEmit",
+    "test": "tsx --test src/script.test.ts"
+  },
+  "dependencies": {
+    "@remotion/cli": "^4.0.441",
+    "@remotion/google-fonts": "^4.0.441",
+    "react": "^19.1.1",
+    "react-dom": "^19.1.1",
+    "remotion": "^4.0.441"
+  },
+  "devDependencies": {
+    "@types/react": "^19.1.12",
+    "@types/react-dom": "^19.1.9",
+    "tsx": "^4.20.5",
+    "typescript": "^5.9.2"
+  }
+}
