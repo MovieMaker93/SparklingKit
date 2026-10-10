@@ -81,15 +81,15 @@ export const modules = ["OCR", "Transcription", "Translation", "Grounding", "Tex
 
 export const nodeEnterAt: Record<NodeId, number> = {
   ui: 0,
-  api: 6,
-  disk: 12,
-  models: 108,
-  queue: 378,
-  worker: 386,
+  api: 4,
+  disk: 8,
+  models: 12,
+  queue: 18,
+  worker: 24,
 };
 
 const highlighted: Record<BeatId, NodeId[]> = {
-  shape: ["ui", "api", "disk"],
+  shape: ["ui", "api", "worker", "disk"],
   modules: ["models"],
   job: ["ui", "api", "disk"],
   queue: ["queue", "worker"],
@@ -100,14 +100,24 @@ const highlighted: Record<BeatId, NodeId[]> = {
 export type DiskRow = {
   name: string;
   note: string;
-  at: number;
+  hotAt: number;
+  filledName?: string;
+  filledNote?: string;
+  filledAt?: number;
 };
 
 export const diskRows: DiskRow[] = [
-  { name: "job.json", note: "manifest", at: 250 },
-  { name: "input/scan.pdf", note: "source", at: 310 },
-  { name: "work/", note: "checkpoints", at: 410 },
-  { name: "output/document.md", note: "artifact", at: 760 },
+  { name: "job.json", note: "manifest", hotAt: 250 },
+  { name: "input/", note: "source", hotAt: 310, filledName: "input/scan.pdf", filledAt: 310 },
+  { name: "work/", note: "checkpoints", hotAt: 410 },
+  {
+    name: "output/",
+    note: "results",
+    hotAt: 760,
+    filledName: "output/document.md",
+    filledNote: "artifact",
+    filledAt: 760,
+  },
 ];
 
 export type PacketLeg = {
@@ -120,8 +130,8 @@ export type PacketLeg = {
 export const packetLegs: PacketLeg[] = [
   { edge: "upload", label: "scan.pdf", start: 260, end: 318 },
   { edge: "create", label: "scan.pdf", start: 318, end: 378 },
-  { edge: "enqueue", label: "run", start: 410, end: 478 },
-  { edge: "dispatch", label: "run", start: 478, end: 530 },
+  { edge: "enqueue", label: "run", start: 400, end: 500 },
+  { edge: "dispatch", label: "run", start: 500, end: 548 },
   { edge: "call", label: "scan.pdf", start: 566, end: 660 },
   { edge: "artifact", label: "document.md", start: 740, end: 830 },
 ];
@@ -156,12 +166,10 @@ export function edgeShownAt(id: EdgeId): number {
   switch (id) {
     case "upload":
     case "create":
-      return 18;
     case "enqueue":
     case "dispatch":
-      return 390;
     case "call":
-      return 548;
+      return 40;
     case "artifact":
     case "events":
       return eventsDraw.start;
@@ -178,13 +186,11 @@ export function activeEdge(frame: number): EdgeId | null {
 
 export function modelsSubtitle(beat: BeatId): string {
   if (beat === "modules") return "Each one names the artifacts it takes and returns";
-  if (beat === "provider") return "This scan is sent to the OCR endpoint";
+  if (beat === "provider") return "This scan calls OCR";
   if (beat === "artifact") return "OCR has answered";
   return "Endpoints you configure";
 }
 
-export function diskDetail(beat: BeatId): string {
-  if (beat === "shape") return "Plain files are the record";
-  if (beat === "artifact") return "Enough to copy, back up or move";
-  return "job.json is the manifest";
+export function diskDetail(_beat: BeatId): string {
+  return "The folder you can copy";
 }

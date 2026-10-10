@@ -15,23 +15,23 @@ export type Rect = { x: number; y: number; w: number; h: number };
 
 export const stage = { w: 1184, h: 960 };
 
-// Shared edges keep arrows orthogonal and off the cards. The enqueue route
-// drops through the gap under the API, then down the left gutter, so it does
-// not cut across the job folder.
+// The queue sits under the job folder, not under the browser. Its arrow
+// leaves the API, runs down the gap beside the folder, and only then turns
+// into the queue, so it does not look like the UI enqueued the run.
 export const nodes: Record<NodeId, Rect> = {
-  ui: { x: 36, y: 48, w: 300, h: 132 },
-  api: { x: 420, y: 48, w: 350, h: 132 },
-  disk: { x: 420, y: 268, w: 350, h: 340 },
-  models: { x: 840, y: 268, w: 308, h: 340 },
-  queue: { x: 36, y: 676, w: 290, h: 116 },
-  worker: { x: 400, y: 676, w: 320, h: 116 },
+  ui: { x: 28, y: 40, w: 292, h: 136 },
+  api: { x: 412, y: 40, w: 320, h: 136 },
+  disk: { x: 412, y: 260, w: 320, h: 328 },
+  models: { x: 908, y: 260, w: 248, h: 328 },
+  queue: { x: 412, y: 676, w: 250, h: 112 },
+  worker: { x: 760, y: 676, w: 300, h: 112 },
 };
 
 export const continueStrip: Rect = {
   x: 36,
-  y: 824,
+  y: nodes.worker.y + nodes.worker.h + 40,
   w: stage.w - 72,
-  h: 96,
+  h: 88,
 };
 
 const midX = (rect: Rect) => rect.x + rect.w / 2;
@@ -47,12 +47,15 @@ export type Edge = {
 
 export const edges: Edge[] = (() => {
   const { ui, api, disk, models, queue, worker } = nodes;
-  const gutterY = api.y + api.h + 34;
-  const gutterX = midX(ui);
   const uploadY = midY(ui) + 22;
-  const eventsY = midY(ui) - 28;
-  const callY = midY(worker);
-  const writeY = midY(disk);
+  const eventsY = midY(ui) - 30;
+  const gutterX = (ui.x + ui.w + disk.x) / 2;
+  const turnY = api.y + api.h + 28;
+  const underDiskY = disk.y + disk.h + 32;
+  const intoQueueX = midX(queue);
+  // Level with the output/ row, so the returning file meets the line it is written to.
+  const writeY = disk.y + disk.h - 108;
+  const callX = midX(models);
 
   return [
     {
@@ -62,7 +65,7 @@ export const edges: Edge[] = (() => {
         { x: ui.x + ui.w, y: uploadY },
         { x: api.x, y: uploadY },
       ],
-      labelAt: { x: (ui.x + ui.w + api.x) / 2, y: uploadY + 22 },
+      labelAt: { x: (ui.x + ui.w + api.x) / 2, y: uploadY + 20 },
     },
     {
       id: "events",
@@ -81,18 +84,20 @@ export const edges: Edge[] = (() => {
         { x: midX(api), y: api.y + api.h },
         { x: midX(disk), y: disk.y },
       ],
-      labelAt: { x: midX(api) + 54, y: (api.y + api.h + disk.y) / 2 },
+      labelAt: { x: midX(api) + 72, y: (api.y + api.h + disk.y) / 2 },
     },
     {
       id: "enqueue",
       label: "enqueue",
       points: [
-        { x: midX(api) - 78, y: api.y + api.h },
-        { x: midX(api) - 78, y: gutterY },
-        { x: gutterX, y: gutterY },
-        { x: gutterX, y: queue.y },
+        { x: api.x + 36, y: api.y + api.h },
+        { x: api.x + 36, y: turnY },
+        { x: gutterX, y: turnY },
+        { x: gutterX, y: underDiskY },
+        { x: intoQueueX, y: underDiskY },
+        { x: intoQueueX, y: queue.y },
       ],
-      labelAt: { x: gutterX + 62, y: (gutterY + queue.y) / 2 },
+      labelAt: { x: gutterX - 58, y: (turnY + underDiskY) / 2 },
     },
     {
       id: "dispatch",
@@ -101,17 +106,16 @@ export const edges: Edge[] = (() => {
         { x: queue.x + queue.w, y: midY(queue) },
         { x: worker.x, y: midY(worker) },
       ],
-      labelAt: { x: (queue.x + queue.w + worker.x) / 2, y: queue.y - 22 },
+      labelAt: { x: (queue.x + queue.w + worker.x) / 2, y: queue.y - 18 },
     },
     {
       id: "call",
       label: "call",
       points: [
-        { x: worker.x + worker.w, y: callY },
-        { x: midX(models), y: callY },
-        { x: midX(models), y: models.y + models.h },
+        { x: callX, y: worker.y },
+        { x: callX, y: models.y + models.h },
       ],
-      labelAt: { x: (worker.x + worker.w + midX(models)) / 2, y: callY - 24 },
+      labelAt: { x: models.x + models.w - 28, y: (worker.y + models.y + models.h) / 2 },
     },
     {
       id: "artifact",
@@ -120,7 +124,7 @@ export const edges: Edge[] = (() => {
         { x: models.x, y: writeY },
         { x: disk.x + disk.w, y: writeY },
       ],
-      labelAt: { x: (models.x + disk.x + disk.w) / 2, y: writeY - 22 },
+      labelAt: { x: (models.x + disk.x + disk.w) / 2, y: writeY - 36 },
     },
   ];
 })();

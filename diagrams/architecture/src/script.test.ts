@@ -118,8 +118,29 @@ test("the closing strip sits under the worker and inside the stage", () => {
 });
 
 test("disk rows arrive in the order the story tells them", () => {
+  const job = beats.find((beat) => beat.id === "job");
+  assert.ok(job);
+  assert.ok(diskRows[0].hotAt >= job.start);
   for (let i = 1; i < diskRows.length; i++) {
-    assert.ok(diskRows[i].at > diskRows[i - 1].at);
+    assert.ok(diskRows[i].hotAt >= diskRows[i - 1].hotAt);
   }
-  assert.ok(diskRows[0].at >= beats.find((beat) => beat.id === "job")!.start);
+});
+
+test("enqueue does not leave the browser card", () => {
+  const ui = nodes.ui;
+  const edge = edgeById.enqueue;
+  const steps = Math.ceil(polylineLength(edge.points) / 4);
+  for (let step = 0; step <= steps; step++) {
+    const point = pointAlong(edge.points, step / steps);
+    const underTheBrowser = point.x > ui.x + 8 && point.x < ui.x + ui.w - 8 && point.y > ui.y + ui.h + 4;
+    assert.equal(underTheBrowser, false);
+  }
+  for (const edge of edges) {
+    assert.equal(strictlyInside(nodes.ui, edge.labelAt), false, edge.id);
+    assert.equal(strictlyInside(nodes.api, edge.labelAt), false, edge.id);
+    assert.equal(strictlyInside(nodes.disk, edge.labelAt), false, edge.id);
+    assert.equal(strictlyInside(nodes.models, edge.labelAt), false, edge.id);
+    assert.equal(strictlyInside(nodes.queue, edge.labelAt), false, edge.id);
+    assert.equal(strictlyInside(nodes.worker, edge.labelAt), false, edge.id);
+  }
 });

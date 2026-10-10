@@ -235,18 +235,18 @@ const Card = ({
           {detail}
         </div>
       ) : null}
-      {id === "disk" ? <DiskRows frame={frame} fps={fps} /> : null}
+      {id === "disk" ? <DiskRows frame={frame} /> : null}
       {id === "models" ? <ModuleList beat={beat} /> : null}
     </div>
   );
 };
 
-const DiskRows = ({ frame, fps }: { frame: number; fps: number }) => {
+const DiskRows = ({ frame }: { frame: number }) => {
   return (
-    <div style={{ marginTop: 14, display: "flex", flexDirection: "column", gap: 8 }}>
+    <div style={{ marginTop: 16, display: "flex", flexDirection: "column", gap: 14 }}>
       {diskRows.map((row) => {
-        const on = appear(frame, fps, row.at);
-        if (on === 0) return null;
+        const filled = row.filledAt !== undefined && frame >= row.filledAt;
+        const hot = frame >= row.hotAt;
         return (
           <div
             key={row.name}
@@ -255,13 +255,14 @@ const DiskRows = ({ frame, fps }: { frame: number; fps: number }) => {
               justifyContent: "space-between",
               alignItems: "baseline",
               gap: 12,
-              opacity: on,
             }}
           >
             <span style={{ fontFamily: "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace", fontSize: 16 }}>
-              {row.name}
+              {filled && row.filledName ? row.filledName : row.name}
             </span>
-            <span style={{ color: on > 0.8 ? theme.accent : theme.muted, fontSize: 13, fontWeight: 600 }}>{row.note}</span>
+            <span style={{ color: hot ? theme.accent : theme.muted, fontSize: 13, fontWeight: 600 }}>
+              {filled && row.filledNote ? row.filledNote : row.note}
+            </span>
           </div>
         );
       })}
