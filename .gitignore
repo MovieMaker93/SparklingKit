@@ -35,3 +35,6 @@ CLAUDE.local.md
 
 # Demo inputs and raw recordings for the README clips
 scripts/media/work/
+
+# Remotion render output for the architecture diagram
+diagrams/architecture/out/
