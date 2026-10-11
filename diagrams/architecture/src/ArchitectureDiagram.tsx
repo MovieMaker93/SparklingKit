@@ -1,195 +1,180 @@
-import { AbsoluteFill, interpolate, spring, useCurrentFrame, useVideoConfig } from "remotion";
-import { loadFont } from "@remotion/google-fonts/Inter";
-import { loadFont as loadManrope } from "@remotion/google-fonts/Manrope";
+import { AbsoluteFill, useCurrentFrame } from "remotion";
+import { loadFont } from "@remotion/google-fonts/Nunito";
 import {
   continueStrip,
-  edgeById,
   edges,
   nodes,
-  pointAlong,
   smoothstep,
   stage,
   strictlyInside,
   toPath,
   type Edge,
-  type EdgeId,
   type NodeId,
+  type Pt,
   type Rect,
 } from "./geometry";
 import {
   activeEdge,
-  activeNodes,
   beatOpacity,
   beats,
-  diskDetail,
   diskRows,
   dominantBeat,
-  edgeShownAt,
-  eventsDraw,
   modules,
-  modelsSubtitle,
-  nodeEnterAt,
-  packetLegs,
   type BeatId,
 } from "./script";
 import { theme } from "./theme";
 
-const inter = loadFont("normal", {
-  weights: ["400", "500", "600", "700"],
-  subsets: ["latin"],
-});
-const manrope = loadManrope("normal", {
-  weights: ["600", "700"],
+const nunito = loadFont("normal", {
+  weights: ["600", "700", "800"],
   subsets: ["latin"],
 });
 
-const stageOrigin = { x: 672, y: 60 };
+const origin = { x: 110, y: 188 };
 
-const appear = (frame: number, fps: number, at: number) => {
-  if (frame < at) return 0;
-  return spring({ frame: frame - at, fps, config: { damping: 200 } });
+const fill: Record<NodeId, string> = {
+  ui: theme.request,
+  api: theme.app,
+  disk: theme.paper,
+  queue: theme.app,
+  worker: theme.app,
+  models: theme.model,
 };
 
-const cardCopy: Record<NodeId, { kicker: string; title: string; detail?: string }> = {
-  ui: { kicker: "Browser", title: "React UI", detail: "Workbench and chat" },
-  api: { kicker: "One Node process", title: "Express API", detail: "Checks the request" },
-  disk: { kicker: "Durable record", title: "data/jobs/<id>" },
-  models: { kicker: "Outside the app", title: "Seven modules" },
-  queue: { kicker: "Coordination", title: "Redis · BullMQ", detail: "Holds the run id" },
-  worker: { kicker: "Same process", title: "Worker", detail: "Module executor" },
+const stepOf: Record<BeatId, { n: string; rect: Rect }> = {
+  shape: { n: "1", rect: nodes.ui },
+  check: { n: "2", rect: nodes.api },
+  job: { n: "3", rect: nodes.disk },
+  queue: { n: "4", rect: nodes.queue },
+  executor: { n: "5", rect: nodes.worker },
+  provider: { n: "6", rect: nodes.models },
+  artifact: { n: "7", rect: continueStrip },
+};
+
+const badgeOf = (beat: BeatId): Pt => {
+  const rect = stepOf[beat].rect;
+  return { x: rect.x - 2, y: rect.y - 2 };
 };
 
 export const ArchitectureDiagram = () => {
   const frame = useCurrentFrame();
-  const { fps } = useVideoConfig();
   const beat = dominantBeat(frame);
-  const hot = new Set(activeNodes(frame));
-  const edgeHot = activeEdge(frame);
-  const enters = Object.fromEntries(
-    (Object.keys(nodes) as NodeId[]).map((id) => [id, appear(frame, fps, nodeEnterAt[id])]),
-  ) as Record<NodeId, number>;
+  const hotEdge = activeEdge(frame);
+  const ring = ringAt(frame);
 
   return (
-    <AbsoluteFill style={{ background: theme.bg, fontFamily: inter.fontFamily, color: theme.ink }}>
+    <AbsoluteFill style={{ background: theme.bg, fontFamily: nunito.fontFamily, color: theme.ink }}>
       <AbsoluteFill
         style={{
-          background:
-            "radial-gradient(880px 520px at 78% 40%, rgba(103, 220, 165, 0.09), transparent 68%)",
+          margin: 28,
+          borderRadius: 28,
+          border: "1.5px solid #c5ddd0",
         }}
       />
-      <Copy frame={frame} beatId={beat.id} />
+      <Header frame={frame} />
       <div
         style={{
           position: "absolute",
-          left: stageOrigin.x,
-          top: stageOrigin.y,
+          left: origin.x,
+          top: origin.y,
           width: stage.w,
           height: stage.h,
-          borderRadius: 28,
-          background: theme.stage,
-          border: `1px solid ${theme.lineSoft}`,
-          overflow: "hidden",
         }}
       >
-        <EdgeLayer frame={frame} enters={enters} hotEdge={edgeHot} />
+        <Arrows hotEdge={hotEdge} />
         {(Object.keys(nodes) as NodeId[]).map((id) => (
-          <Card
-            key={id}
-            id={id}
-            rect={nodes[id]}
-            enter={enters[id]}
-            active={hot.has(id)}
-            beat={beat.id}
-            frame={frame}
-            fps={fps}
-          />
+          <Card key={id} id={id} beat={beat.id} />
         ))}
-        <Packet frame={frame} />
-        <ContinueStrip frame={frame} fps={fps} />
+        <Lineage beat={beat.id} />
+        {beats.map((item) => (
+          <Badge key={item.id} n={stepOf[item.id].n} at={badgeOf(item.id)} />
+        ))}
+        <Ring at={ring} frame={frame} />
       </div>
     </AbsoluteFill>
   );
 };
 
-const Copy = ({ frame, beatId }: { frame: number; beatId: BeatId }) => {
+const ringAt = (frame: number): Pt => {
+  const beat = dominantBeat(frame);
+  const index = beats.findIndex((item) => item.id === beat.id);
+  const to = badgeOf(beat.id);
+  if (index <= 0) return to;
+  const from = badgeOf(beats[index - 1].id);
+  const t = smoothstep((frame - beat.start) / 14);
+  return { x: from.x + (to.x - from.x) * t, y: from.y + (to.y - from.y) * t };
+};
+
+const Header = ({ frame }: { frame: number }) => {
   return (
-    <div style={{ position: "absolute", left: 64, top: 72, width: 560 }}>
-      <div style={{ display: "flex", alignItems: "baseline", gap: 12 }}>
-        <span style={{ fontFamily: manrope.fontFamily, fontWeight: 700, fontSize: 22, letterSpacing: -0.4 }}>
-          SparklingKit
-        </span>
-        <span style={{ color: theme.muted, fontSize: 15, fontWeight: 600, letterSpacing: 1.4, textTransform: "uppercase" }}>
-          Architecture
-        </span>
+    <div style={{ position: "absolute", left: 72, right: 72, top: 48 }}>
+      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 24 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+          <div style={{ width: 10, height: 46, borderRadius: 8, background: theme.ring }} />
+          <h1 style={{ margin: 0, fontSize: 48, fontWeight: 800, letterSpacing: -0.8, lineHeight: 1 }}>
+            How a <Word tone={theme.titleFile}>file</Word> becomes the <Word tone={theme.titleNext}>next one</Word>
+          </h1>
+        </div>
+        <div style={{ textAlign: "right" }}>
+          <div style={{ fontWeight: 800, fontSize: 18 }}>SparklingKit</div>
+          <Legend />
+        </div>
       </div>
-      <div style={{ position: "relative", height: 470, marginTop: 36 }}>
-        {beats.map((beat) => {
-          const opacity = beatOpacity(frame, beat);
-          return (
-            <div key={beat.id} style={{ position: "absolute", inset: 0, opacity }}>
-              <div style={{ color: theme.accent, fontWeight: 700, fontSize: 15, letterSpacing: 1.6 }}>
-                {beat.index}  {beat.kicker.toUpperCase()}
-              </div>
-              <h1
-                style={{
-                  margin: "14px 0 0",
-                  height: 124,
-                  fontFamily: manrope.fontFamily,
-                  fontWeight: 700,
-                  fontSize: 46,
-                  lineHeight: 1.08,
-                  letterSpacing: -1.1,
-                }}
-              >
-                {beat.title}
-              </h1>
-              <p style={{ margin: "8px 0 0", fontSize: 25, lineHeight: 1.38, color: theme.body }}>{beat.body}</p>
-            </div>
-          );
-        })}
-      </div>
-      <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
-        {beats.map((beat) => {
-          const on = beat.id === beatId;
-          return (
-            <div
-              key={beat.id}
-              style={{
-                width: on ? 36 : 10,
-                height: 8,
-                borderRadius: 99,
-                background: on ? theme.accent : theme.lineSoft,
-              }}
-            />
-          );
-        })}
-      </div>
-      <div style={{ marginTop: 28, color: theme.muted, fontSize: 16, lineHeight: 1.4 }}>
-        Mint marks the part this sentence is about.
+      <div style={{ position: "relative", height: 64, marginTop: 14, marginLeft: 26 }}>
+        {beats.map((beat) => (
+          <p
+            key={beat.id}
+            style={{
+              position: "absolute",
+              margin: 0,
+              fontSize: 26,
+              fontWeight: 700,
+              color: theme.muted,
+              opacity: beatOpacity(frame, beat),
+            }}
+          >
+            {beat.body}
+          </p>
+        ))}
       </div>
     </div>
   );
 };
 
-const Card = ({
-  id,
-  rect,
-  enter,
-  active,
-  beat,
-  frame,
-  fps,
-}: {
-  id: NodeId;
-  rect: Rect;
-  enter: number;
-  active: boolean;
-  beat: BeatId;
-  frame: number;
-  fps: number;
-}) => {
-  const copy = cardCopy[id];
-  const detail = id === "disk" ? diskDetail(beat) : id === "models" ? modelsSubtitle(beat) : copy.detail;
+const Word = ({ children, tone }: { children: string; tone: string }) => {
+  return (
+    <span
+      style={{
+        background: tone,
+        borderRadius: 12,
+        padding: "0 10px 2px",
+      }}
+    >
+      {children}
+    </span>
+  );
+};
+
+const Legend = () => {
+  const items = [
+    { color: theme.request, label: "request" },
+    { color: theme.app, label: "the app" },
+    { color: theme.model, label: "the model" },
+    { color: theme.artifact, label: "the artifact" },
+  ];
+  return (
+    <div style={{ display: "flex", gap: 14, marginTop: 8, justifyContent: "flex-end" }}>
+      {items.map((item) => (
+        <div key={item.label} style={{ display: "flex", alignItems: "center", gap: 6, color: theme.muted, fontSize: 14, fontWeight: 700 }}>
+          <span style={{ width: 14, height: 14, borderRadius: 4, background: item.color, border: "1px solid rgba(0,0,0,0.06)" }} />
+          {item.label}
+        </div>
+      ))}
+    </div>
+  );
+};
+
+const Card = ({ id, beat }: { id: NodeId; beat: BeatId }) => {
+  const rect = nodes[id];
   return (
     <div
       style={{
@@ -199,219 +184,140 @@ const Card = ({
         width: rect.w,
         height: rect.h,
         boxSizing: "border-box",
-        padding: "16px 18px",
+        padding: "26px 16px 12px 22px",
         borderRadius: 18,
-        background: active ? theme.card : theme.cardIdle,
-        border: `1.5px solid ${active ? theme.accent : theme.lineSoft}`,
-        boxShadow: active ? `0 0 0 6px ${theme.accentGlow}` : "none",
-        opacity: enter,
-        transform: `translateY(${(1 - enter) * 14}px)`,
+        background: fill[id],
       }}
     >
-      <div
-        style={{
-          color: active ? theme.accent : theme.muted,
-          fontSize: 12,
-          fontWeight: 700,
-          letterSpacing: 1.3,
-          textTransform: "uppercase",
-        }}
-      >
-        {copy.kicker}
+      {id === "ui" ? <UploadCard /> : null}
+      {id === "api" ? <ApiCard /> : null}
+      {id === "disk" ? <DiskCard /> : null}
+      {id === "queue" ? <PlainCard kicker="Coordination" title="Redis · BullMQ" detail="Holds the run id" /> : null}
+      {id === "worker" ? <PlainCard kicker="Same process" title="Worker" detail="Module executor" /> : null}
+      {id === "models" ? <ModulesCard beat={beat} /> : null}
+    </div>
+  );
+};
+
+const Kicker = ({ children }: { children: string }) => {
+  return (
+    <div style={{ fontSize: 13, fontWeight: 800, letterSpacing: 0.4, color: theme.muted, textTransform: "uppercase" }}>
+      {children}
+    </div>
+  );
+};
+
+const UploadCard = () => {
+  return (
+    <>
+      <Kicker>Browser</Kicker>
+      <div style={{ marginTop: 4, fontSize: 28, fontWeight: 800 }}>React UI</div>
+      <div style={{ marginTop: 12, background: theme.paper, borderRadius: 12, padding: "10px 12px", fontSize: 16, fontWeight: 700 }}>
+        scan.pdf
+        <div style={{ fontWeight: 600, color: theme.muted, marginTop: 2 }}>Workbench and chat</div>
       </div>
-      <div
-        style={{
-          marginTop: 4,
-          fontFamily: manrope.fontFamily,
-          fontWeight: 700,
-          fontSize: id === "disk" || id === "models" ? 26 : 28,
-          letterSpacing: -0.5,
-        }}
-      >
-        {copy.title}
+    </>
+  );
+};
+
+const ApiCard = () => {
+  return (
+    <>
+      <Kicker>One Node process</Kicker>
+      <div style={{ marginTop: 4, fontSize: 28, fontWeight: 800 }}>Express API</div>
+      <div style={{ marginTop: 12, display: "flex", gap: 8 }}>
+        <Chip>validate</Chip>
+        <Chip>open job</Chip>
       </div>
-      {detail ? (
-        <div style={{ marginTop: 4, color: theme.body, fontSize: 15, lineHeight: 1.3, minHeight: id === "models" ? 40 : 0 }}>
-          {detail}
-        </div>
-      ) : null}
-      {id === "disk" ? <DiskRows frame={frame} /> : null}
-      {id === "models" ? <ModuleList beat={beat} /> : null}
-    </div>
+    </>
   );
 };
 
-const DiskRows = ({ frame }: { frame: number }) => {
+const Chip = ({ children, hot = false }: { children: string; hot?: boolean }) => {
   return (
-    <div style={{ marginTop: 16, display: "flex", flexDirection: "column", gap: 14 }}>
-      {diskRows.map((row) => {
-        const filled = row.filledAt !== undefined && frame >= row.filledAt;
-        const hot = frame >= row.hotAt;
-        return (
-          <div
-            key={row.name}
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "baseline",
-              gap: 12,
-            }}
-          >
-            <span style={{ fontFamily: "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace", fontSize: 16 }}>
-              {filled && row.filledName ? row.filledName : row.name}
-            </span>
-            <span style={{ color: hot ? theme.accent : theme.muted, fontSize: 13, fontWeight: 600 }}>
-              {filled && row.filledNote ? row.filledNote : row.note}
-            </span>
-          </div>
-        );
-      })}
-    </div>
-  );
-};
-
-const ModuleList = ({ beat }: { beat: BeatId }) => {
-  return (
-    <div style={{ marginTop: 10, display: "flex", flexDirection: "column", gap: 2 }}>
-      {modules.map((name) => {
-        const hot = name === "OCR" && (beat === "provider" || beat === "artifact");
-        return (
-          <div
-            key={name}
-            style={{
-              height: 28,
-              borderRadius: 8,
-              padding: "0 8px",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              background: hot ? theme.accentSoft : "transparent",
-              color: hot ? theme.accent : theme.ink,
-              fontSize: 16,
-              fontWeight: hot ? 700 : 500,
-            }}
-          >
-            <span>{name}</span>
-            {hot ? <span style={{ fontSize: 12, fontWeight: 700 }}>{beat === "provider" ? "this scan" : "done"}</span> : null}
-          </div>
-        );
-      })}
-    </div>
-  );
-};
-
-const EdgeLayer = ({
-  frame,
-  enters,
-  hotEdge,
-}: {
-  frame: number;
-  enters: Record<NodeId, number>;
-  hotEdge: EdgeId | null;
-}) => {
-  const owners: Record<Edge["id"], [NodeId, NodeId]> = {
-    upload: ["ui", "api"],
-    events: ["api", "ui"],
-    create: ["api", "disk"],
-    enqueue: ["api", "queue"],
-    dispatch: ["queue", "worker"],
-    call: ["worker", "models"],
-    artifact: ["models", "disk"],
-  };
-  return (
-    <svg width={stage.w} height={stage.h} style={{ position: "absolute", inset: 0 }}>
-      <defs>
-        <marker id="head-idle" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
-          <path d="M0 0 L8 4 L0 8 Z" fill={theme.line} />
-        </marker>
-        <marker id="head-hot" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
-          <path d="M0 0 L8 4 L0 8 Z" fill={theme.accent} />
-        </marker>
-      </defs>
-      {edges.map((edge) => {
-        const [from, to] = owners[edge.id];
-        const shown = frame >= edgeShownAt(edge.id);
-        const opacity = shown ? Math.min(enters[from], enters[to]) : 0;
-        const hot = edge.id === hotEdge;
-        const draw =
-          edge.id === "events"
-            ? interpolate(frame, [eventsDraw.start, eventsDraw.end], [1, 0], {
-                extrapolateLeft: "clamp",
-                extrapolateRight: "clamp",
-              })
-            : 0;
-        return (
-          <g key={edge.id} opacity={opacity}>
-            <path
-              d={toPath(edge.points)}
-              fill="none"
-              stroke={hot ? theme.accent : theme.line}
-              strokeWidth={hot ? 3 : 2}
-              strokeDasharray={edge.dashed ? "1" : undefined}
-              strokeDashoffset={edge.dashed ? draw : undefined}
-              pathLength={edge.dashed ? 1 : undefined}
-              markerEnd={edge.dashed && draw > 0.08 ? undefined : hot ? "url(#head-hot)" : "url(#head-idle)"}
-            />
-            <EdgeLabel edge={edge} hot={hot} opacity={hot ? 1 : 0} />
-          </g>
-        );
-      })}
-    </svg>
-  );
-};
-
-const EdgeLabel = ({ edge, hot, opacity }: { edge: Edge; hot: boolean; opacity: number }) => {
-  // The label sits in the gutter beside the line. Skip it when that point
-  // would land on a card (the short dispatch gap is the tight one).
-  if (Object.values(nodes).some((rect) => strictlyInside(rect, edge.labelAt, 0))) return null;
-  return (
-    <text
-      x={edge.labelAt.x}
-      y={edge.labelAt.y}
-      textAnchor="middle"
-      dominantBaseline="middle"
-      fill={hot ? theme.accent : theme.muted}
-      fontSize={14}
-      fontWeight={700}
-      opacity={opacity}
-      fontFamily={inter.fontFamily}
-    >
-      {edge.label}
-    </text>
-  );
-};
-
-const Packet = ({ frame }: { frame: number }) => {
-  const leg = packetLegs.find((item) => frame >= item.start && frame < item.end);
-  if (!leg) return null;
-  const t = smoothstep((frame - leg.start) / (leg.end - leg.start));
-  const point = pointAlong(edgeById[leg.edge].points, t);
-  return (
-    <div
+    <span
       style={{
-        position: "absolute",
-        left: point.x,
-        top: point.y,
-        transform: "translate(-50%, -50%)",
-        background: theme.accent,
-        color: theme.accentInk,
-        fontWeight: 700,
-        fontSize: 15,
-        lineHeight: 1,
-        padding: "8px 12px",
+        background: hot ? theme.model : theme.paper,
         borderRadius: 999,
-        whiteSpace: "nowrap",
-        boxShadow: "0 8px 20px rgba(103, 220, 165, 0.28)",
+        padding: "6px 12px",
+        fontSize: 15,
+        fontWeight: 800,
       }}
     >
-      {leg.label}
-    </div>
+      {children}
+    </span>
   );
 };
 
-const ContinueStrip = ({ frame, fps }: { frame: number; fps: number }) => {
-  const enter = appear(frame, fps, 760);
-  if (enter === 0) return null;
+const DiskCard = () => {
+  return (
+    <>
+      <Kicker>Durable record</Kicker>
+      <div style={{ marginTop: 2, fontSize: 26, fontWeight: 800 }}>data/jobs/&lt;id&gt;</div>
+      <div style={{ marginTop: 10, display: "flex", flexDirection: "column", gap: 6 }}>
+        {diskRows.map((row) => (
+          <div key={row.name} style={{ display: "flex", justifyContent: "space-between", gap: 8, fontSize: 16, fontWeight: 700 }}>
+            <span>{row.name}</span>
+            <span style={{ color: theme.muted, fontWeight: 700 }}>{row.note}</span>
+          </div>
+        ))}
+      </div>
+    </>
+  );
+};
+
+const PlainCard = ({ kicker, title, detail }: { kicker: string; title: string; detail: string }) => {
+  return (
+    <>
+      <Kicker>{kicker}</Kicker>
+      <div style={{ marginTop: 4, fontSize: 26, fontWeight: 800 }}>{title}</div>
+      <div style={{ marginTop: 4, fontSize: 16, fontWeight: 700, color: theme.muted }}>{detail}</div>
+    </>
+  );
+};
+
+const ModulesCard = ({ beat }: { beat: BeatId }) => {
+  return (
+    <>
+      <Kicker>Outside the app</Kicker>
+      <div style={{ marginTop: 2, fontSize: 26, fontWeight: 800 }}>Seven modules</div>
+      <div
+        style={{
+          marginTop: 10,
+          display: "grid",
+          gridTemplateColumns: "1fr 1fr",
+          gap: 8,
+        }}
+      >
+        {modules.map((name) => {
+          const hot = name === "OCR" && (beat === "provider" || beat === "artifact");
+          return (
+            <div
+              key={name}
+              style={{
+                background: theme.paper,
+                borderRadius: 10,
+                padding: "6px 10px",
+                fontSize: 15,
+                fontWeight: 800,
+                display: "flex",
+                justifyContent: "space-between",
+                gridColumn: name === "Chat" ? "1 / -1" : undefined,
+                outline: hot ? `2px solid ${theme.ring}` : "none",
+              }}
+            >
+              <span>{name}</span>
+              {hot ? <span style={{ color: theme.ring }}>{beat === "provider" ? "this scan" : "done"}</span> : null}
+            </div>
+          );
+        })}
+      </div>
+    </>
+  );
+};
+
+const Lineage = ({ beat }: { beat: BeatId }) => {
+  const on = beat === "artifact";
   return (
     <div
       style={{
@@ -421,23 +327,110 @@ const ContinueStrip = ({ frame, fps }: { frame: number; fps: number }) => {
         width: continueStrip.w,
         height: continueStrip.h,
         boxSizing: "border-box",
-        borderRadius: 16,
-        border: `1.5px solid ${theme.accent}`,
-        background: theme.accentSoft,
-        padding: "14px 20px",
-        opacity: enter,
-        transform: `translateY(${(1 - enter) * 10}px)`,
+        borderRadius: 18,
+        background: theme.artifact,
+        padding: "16px 22px 14px 36px",
         display: "flex",
         flexDirection: "column",
         justifyContent: "center",
+        outline: on ? `2px solid ${theme.ring}` : "none",
       }}
     >
-      <div style={{ fontFamily: "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace", fontSize: 18 }}>
-        scan.pdf → document.md
-      </div>
-      <div style={{ marginTop: 4, color: theme.body, fontSize: 16 }}>
+      <div style={{ fontSize: 22, fontWeight: 800 }}>scan.pdf → document.md</div>
+      <div style={{ marginTop: 2, fontSize: 16, fontWeight: 700, color: theme.muted }}>
         Continue with translation, a mind map or chat. Copy the folder and the job comes with you.
       </div>
     </div>
+  );
+};
+
+const Badge = ({ n, at }: { n: string; at: Pt }) => {
+  return (
+    <div
+      style={{
+        position: "absolute",
+        left: at.x - 17,
+        top: at.y - 17,
+        width: 34,
+        height: 34,
+        borderRadius: 99,
+        background: theme.ink,
+        color: "#fff",
+        fontWeight: 800,
+        fontSize: 18,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+      }}
+    >
+      {n}
+    </div>
+  );
+};
+
+const Ring = ({ at, frame }: { at: Pt; frame: number }) => {
+  const pulse = 1 + Math.sin(frame / 5) * 0.04;
+  return (
+    <div
+      style={{
+        position: "absolute",
+        left: at.x - 24,
+        top: at.y - 24,
+        width: 48,
+        height: 48,
+        borderRadius: 99,
+        border: `4px solid ${theme.ring}`,
+        transform: `scale(${pulse})`,
+      }}
+    />
+  );
+};
+
+const Arrows = ({ hotEdge }: { hotEdge: ReturnType<typeof activeEdge> }) => {
+  return (
+    <svg width={stage.w} height={stage.h} style={{ position: "absolute", inset: 0, overflow: "visible" }}>
+      <defs>
+        <marker id="head" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+          <path d="M0 0 L8 4 L0 8 Z" fill={theme.line} />
+        </marker>
+        <marker id="head-hot" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+          <path d="M0 0 L8 4 L0 8 Z" fill={theme.ring} />
+        </marker>
+      </defs>
+      {edges.map((edge) => {
+        const hot = edge.id === hotEdge;
+        return (
+          <g key={edge.id}>
+            <path
+              d={toPath(edge.points)}
+              fill="none"
+              stroke={hot ? theme.ring : theme.line}
+              strokeWidth={hot ? 2.5 : 1.75}
+              strokeDasharray={edge.dashed ? "7 6" : undefined}
+              markerEnd={hot ? "url(#head-hot)" : "url(#head)"}
+            />
+            {hot ? <EdgeLabel edge={edge} hot={hot} /> : null}
+          </g>
+        );
+      })}
+    </svg>
+  );
+};
+
+const EdgeLabel = ({ edge, hot }: { edge: Edge; hot: boolean }) => {
+  if (Object.values(nodes).some((rect) => strictlyInside(rect, edge.labelAt, 0))) return null;
+  return (
+    <text
+      x={edge.labelAt.x}
+      y={edge.labelAt.y}
+      textAnchor="middle"
+      dominantBaseline="middle"
+      fill={hot ? theme.ring : theme.muted}
+      fontSize={15}
+      fontWeight={800}
+      fontFamily={nunito.fontFamily}
+    >
+      {edge.label}
+    </text>
   );
 };

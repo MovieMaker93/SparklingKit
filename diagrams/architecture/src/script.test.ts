@@ -39,19 +39,13 @@ test("beats cover the timeline and crossfade", () => {
 });
 
 test("one sentence is fully visible in the middle of each step", () => {
-  const expected: Array<[number, string]> = [
-    [60, "shape"],
-    [189, "modules"],
-    [324, "job"],
-    [471, "queue"],
-    [624, "provider"],
-    [860, "artifact"],
-  ];
-  for (const [frame, id] of expected) {
-    const beat = beats.find((item) => item.id === id);
-    assert.ok(beat);
-    assert.equal(dominantBeat(frame).id, id);
-    assert.equal(beatOpacity(frame, beat), 1);
+  for (let i = 0; i < beats.length; i++) {
+    const beat = beats[i];
+    const from = i === 0 ? beat.start : beats[i - 1].end;
+    const to = i === beats.length - 1 ? DURATION - 1 : beats[i + 1].start;
+    const frame = Math.round((from + to) / 2);
+    assert.equal(dominantBeat(frame).id, beat.id, `frame ${frame}`);
+    assert.equal(beatOpacity(frame, beat), 1, `frame ${frame}`);
   }
 });
 
@@ -89,8 +83,8 @@ test("packet legs stay inside the timeline and on a real edge", () => {
     assert.ok(polylineLength(edgeById[leg.edge].points) > 40);
   }
   assert.ok(eventsDraw.start < eventsDraw.end);
-  assert.equal(activeEdge(300), "upload");
-  assert.equal(activeEdge(800), "artifact");
+  assert.equal(activeEdge(60), "upload");
+  assert.equal(activeEdge(820), "artifact");
   assert.equal(activeEdge(880), "events");
 });
 
@@ -117,10 +111,9 @@ test("the closing strip sits under the worker and inside the stage", () => {
   assert.ok(continueStrip.x + continueStrip.w <= stage.w);
 });
 
-test("disk rows arrive in the order the story tells them", () => {
-  const job = beats.find((beat) => beat.id === "job");
-  assert.ok(job);
-  assert.ok(diskRows[0].hotAt >= job.start);
+test("disk rows stay in story order", () => {
+  const names = diskRows.map((row) => row.name);
+  assert.deepEqual(names, ["job.json", "input/scan.pdf", "work/", "output/document.md"]);
   for (let i = 1; i < diskRows.length; i++) {
     assert.ok(diskRows[i].hotAt >= diskRows[i - 1].hotAt);
   }

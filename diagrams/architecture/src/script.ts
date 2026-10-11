@@ -6,7 +6,7 @@ export const HEIGHT = 1080;
 export const DURATION = 900;
 const FADE = 12;
 
-export type BeatId = "shape" | "modules" | "job" | "queue" | "provider" | "artifact";
+export type BeatId = "shape" | "check" | "job" | "queue" | "executor" | "provider" | "artifact";
 
 export type Beat = {
   id: BeatId;
@@ -23,78 +23,89 @@ export type Beat = {
 export const beats: Beat[] = [
   {
     id: "shape",
-    index: "01",
-    kicker: "The shape",
-    title: "One process, files, and endpoints",
-    body: "The browser, the API and the worker are one Node process. An upload becomes a folder under data/. The models stay outside the app, on HTTP endpoints you configure.",
+    index: "1",
+    kicker: "Upload",
+    title: "The scan starts here",
+    body: "scan.pdf starts in the browser.",
     start: 0,
-    end: 132,
+    end: 140,
   },
   {
-    id: "modules",
-    index: "02",
-    kicker: "Modules",
-    title: "A capability, not a screen",
-    body: "OCR, transcription, translation, grounding, images, mind maps and chat are modules. Each one names the artifact kinds it accepts and the kinds it produces. The interface follows that list.",
-    start: 120,
-    end: 258,
+    id: "check",
+    index: "2",
+    kicker: "Check",
+    title: "The request is checked",
+    body: "Express checks the request, then opens a job.",
+    start: 128,
+    end: 268,
   },
   {
     id: "job",
-    index: "03",
-    kicker: "The job",
+    index: "3",
+    kicker: "Folder",
     title: "The folder is the job",
-    body: "Express checks the upload, then writes data/jobs/<id>/. job.json is the manifest. input/ keeps the source, work/ keeps checkpoints, and output/ keeps the files you will reuse.",
-    start: 246,
-    end: 402,
+    body: "job.json, input/, work/ and output/ are ordinary files.",
+    start: 256,
+    end: 396,
   },
   {
     id: "queue",
-    index: "04",
-    kicker: "The run",
+    index: "4",
+    kicker: "Queue",
     title: "Redis only carries the run",
-    body: "BullMQ stores a run id. The worker reads the manifest and hands the run to that module's executor. The queue does not import OCR, speech or chat.",
-    start: 390,
-    end: 552,
+    body: "BullMQ stores a run id. The file stays in the folder.",
+    start: 384,
+    end: 524,
+  },
+  {
+    id: "executor",
+    index: "5",
+    kicker: "Worker",
+    title: "The worker dispatches",
+    body: "The worker calls that module's executor. The queue does not.",
+    start: 512,
+    end: 652,
   },
   {
     id: "provider",
-    index: "05",
-    kicker: "The provider",
-    title: "The executor calls out",
-    body: "A provider is the configured endpoint for a module. This scan goes to OCR. The weights are not part of the app, so the same job folder can point at another model.",
-    start: 540,
-    end: 708,
+    index: "6",
+    kicker: "Model",
+    title: "The model stays outside",
+    body: "This scan calls OCR. The weights are not part of the app.",
+    start: 640,
+    end: 780,
   },
   {
     id: "artifact",
-    index: "06",
-    kicker: "The artifact",
+    index: "7",
+    kicker: "Artifact",
     title: "The result remembers its source",
-    body: "The text comes back as an artifact: which run wrote it, and which file it came from. That lineage is why the Markdown can continue into a translation, a mind map or a chat. Progress streams to the browser.",
-    start: 696,
+    body: "document.md remembers scan.pdf, so the next module can use it.",
+    start: 768,
     end: 900,
   },
 ];
 
 export const modules = ["OCR", "Transcription", "Translation", "Grounding", "Text to image", "Mind map", "Chat"] as const;
 
+// The whole board is on screen from the first frame. The ring does the walking.
 export const nodeEnterAt: Record<NodeId, number> = {
   ui: 0,
-  api: 4,
-  disk: 8,
-  models: 12,
-  queue: 18,
-  worker: 24,
+  api: 0,
+  disk: 0,
+  models: 0,
+  queue: 0,
+  worker: 0,
 };
 
 const highlighted: Record<BeatId, NodeId[]> = {
-  shape: ["ui", "api", "worker", "disk"],
-  modules: ["models"],
-  job: ["ui", "api", "disk"],
-  queue: ["queue", "worker"],
-  provider: ["worker", "models"],
-  artifact: ["disk", "models", "ui"],
+  shape: ["ui"],
+  check: ["api"],
+  job: ["disk"],
+  queue: ["queue"],
+  executor: ["worker"],
+  provider: ["models"],
+  artifact: ["disk"],
 };
 
 export type DiskRow = {
@@ -107,17 +118,10 @@ export type DiskRow = {
 };
 
 export const diskRows: DiskRow[] = [
-  { name: "job.json", note: "manifest", hotAt: 250 },
-  { name: "input/", note: "source", hotAt: 310, filledName: "input/scan.pdf", filledAt: 310 },
-  { name: "work/", note: "checkpoints", hotAt: 410 },
-  {
-    name: "output/",
-    note: "results",
-    hotAt: 760,
-    filledName: "output/document.md",
-    filledNote: "artifact",
-    filledAt: 760,
-  },
+  { name: "job.json", note: "manifest", hotAt: 0 },
+  { name: "input/scan.pdf", note: "source", hotAt: 0 },
+  { name: "work/", note: "checkpoints", hotAt: 0 },
+  { name: "output/document.md", note: "artifact", hotAt: 0 },
 ];
 
 export type PacketLeg = {
@@ -128,15 +132,15 @@ export type PacketLeg = {
 };
 
 export const packetLegs: PacketLeg[] = [
-  { edge: "upload", label: "scan.pdf", start: 260, end: 318 },
-  { edge: "create", label: "scan.pdf", start: 318, end: 378 },
-  { edge: "enqueue", label: "run", start: 400, end: 500 },
-  { edge: "dispatch", label: "run", start: 500, end: 548 },
-  { edge: "call", label: "scan.pdf", start: 566, end: 660 },
-  { edge: "artifact", label: "document.md", start: 740, end: 830 },
+  { edge: "upload", label: "scan.pdf", start: 24, end: 110 },
+  { edge: "create", label: "scan.pdf", start: 140, end: 230 },
+  { edge: "enqueue", label: "run", start: 400, end: 490 },
+  { edge: "dispatch", label: "run", start: 520, end: 600 },
+  { edge: "call", label: "scan.pdf", start: 660, end: 750 },
+  { edge: "artifact", label: "document.md", start: 790, end: 860 },
 ];
 
-export const eventsDraw = { start: 760, end: 860 };
+export const eventsDraw = { start: 860, end: 900 };
 
 export function beatOpacity(frame: number, beat: Beat): number {
   const fadeIn = beat.start === 0 ? 1 : clamp((frame - beat.start) / FADE, 0, 1);
@@ -162,18 +166,8 @@ export function activeNodes(frame: number): NodeId[] {
   return highlighted[dominantBeat(frame).id].filter((id) => frame >= nodeEnterAt[id]);
 }
 
-export function edgeShownAt(id: EdgeId): number {
-  switch (id) {
-    case "upload":
-    case "create":
-    case "enqueue":
-    case "dispatch":
-    case "call":
-      return 40;
-    case "artifact":
-    case "events":
-      return eventsDraw.start;
-  }
+export function edgeShownAt(_id: EdgeId): number {
+  return 0;
 }
 
 export function activeEdge(frame: number): EdgeId | null {
@@ -185,7 +179,6 @@ export function activeEdge(frame: number): EdgeId | null {
 }
 
 export function modelsSubtitle(beat: BeatId): string {
-  if (beat === "modules") return "Each one names the artifacts it takes and returns";
   if (beat === "provider") return "This scan calls OCR";
   if (beat === "artifact") return "OCR has answered";
   return "Endpoints you configure";

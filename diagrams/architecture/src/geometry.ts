@@ -13,18 +13,18 @@ export type Pt = { x: number; y: number };
 
 export type Rect = { x: number; y: number; w: number; h: number };
 
-export const stage = { w: 1184, h: 960 };
+export const stage = { w: 1700, h: 800 };
 
 // The queue sits under the job folder, not under the browser. Its arrow
 // leaves the API, runs down the gap beside the folder, and only then turns
 // into the queue, so it does not look like the UI enqueued the run.
 export const nodes: Record<NodeId, Rect> = {
-  ui: { x: 28, y: 40, w: 292, h: 136 },
-  api: { x: 412, y: 40, w: 320, h: 136 },
-  disk: { x: 412, y: 260, w: 320, h: 328 },
-  models: { x: 908, y: 260, w: 248, h: 328 },
-  queue: { x: 412, y: 676, w: 250, h: 112 },
-  worker: { x: 760, y: 676, w: 300, h: 112 },
+  ui: { x: 36, y: 20, w: 380, h: 160 },
+  api: { x: 500, y: 20, w: 380, h: 160 },
+  disk: { x: 500, y: 248, w: 380, h: 230 },
+  models: { x: 980, y: 248, w: 640, h: 230 },
+  queue: { x: 500, y: 548, w: 240, h: 112 },
+  worker: { x: 860, y: 548, w: 300, h: 112 },
 };
 
 export const continueStrip: Rect = {
@@ -55,7 +55,8 @@ export const edges: Edge[] = (() => {
   const intoQueueX = midX(queue);
   // Level with the output/ row, so the returning file meets the line it is written to.
   const writeY = disk.y + disk.h - 108;
-  const callX = midX(models);
+  // The worker and the module card overlap in x only on the worker's right side.
+  const callX = Math.max(worker.x + 40, models.x + 80);
 
   return [
     {
@@ -65,7 +66,7 @@ export const edges: Edge[] = (() => {
         { x: ui.x + ui.w, y: uploadY },
         { x: api.x, y: uploadY },
       ],
-      labelAt: { x: (ui.x + ui.w + api.x) / 2, y: uploadY + 20 },
+      labelAt: { x: (ui.x + ui.w + api.x) / 2, y: midY(ui) - 4 },
     },
     {
       id: "events",
@@ -115,7 +116,7 @@ export const edges: Edge[] = (() => {
         { x: callX, y: worker.y },
         { x: callX, y: models.y + models.h },
       ],
-      labelAt: { x: models.x + models.w - 28, y: (worker.y + models.y + models.h) / 2 },
+      labelAt: { x: callX + 56, y: (worker.y + models.y + models.h) / 2 },
     },
     {
       id: "artifact",
