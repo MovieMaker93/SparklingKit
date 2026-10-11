@@ -1,5 +1,8 @@
 # SparklingKit ⚡ — a local AI workspace for one DGX Spark
 
+> [!IMPORTANT]
+> **This fork has moved.** It is now its own project, **Sparkfire**: [github.com/MovieMaker93/Sparkfire](https://github.com/MovieMaker93/Sparkfire). This repository is archived and gets no more updates. To move an existing install, run `git remote set-url origin https://github.com/MovieMaker93/Sparkfire.git && git pull` in your checkout, then run the start script again; your data, models and settings are kept.
+
 [![CI](https://github.com/MovieMaker93/SparklingKit/actions/workflows/ci.yml/badge.svg)](https://github.com/MovieMaker93/SparklingKit/actions/workflows/ci.yml)
 [![Security](https://github.com/MovieMaker93/SparklingKit/actions/workflows/security.yml/badge.svg)](https://github.com/MovieMaker93/SparklingKit/actions/workflows/security.yml)
 [![Platform](https://img.shields.io/badge/platform-DGX%20Spark%20%C2%B7%20ARM64-76b900?style=flat-square)](#quick-start)
